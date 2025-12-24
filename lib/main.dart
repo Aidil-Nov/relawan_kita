@@ -6,6 +6,7 @@ import 'package:relawan_kita/features/auth/presentation/pages/splash_page.dart';
 import 'package:relawan_kita/features/auth/presentation/pages/login_page.dart';
 import 'package:relawan_kita/features/auth/presentation/pages/register_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/home_page.dart';
+import 'package:relawan_kita/features/auth/presentation/pages/forgot_password_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,9 +33,11 @@ class MyApp extends StatelessWidget {
 
       // 2. Daftarkan Rute Splash Screen
       routes: {
-        '/': (context) => const SplashPage(), // Rute awal (Splash)
+        '/': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/forgot-password': (context) =>
+            const ForgotPasswordPage(), // <-- TAMBAHKAN INI
         '/home': (context) => const HomePage(),
       },
     );

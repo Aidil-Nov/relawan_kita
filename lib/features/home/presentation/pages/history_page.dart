@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'report_detail_pages.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
@@ -35,30 +36,35 @@ class HistoryPage extends StatelessWidget {
 }
 
 // --- WIDGET TAB 1: RIWAYAT LAPORAN ---
+// JANGAN LUPA IMPORT INI DI BAGIAN PALING ATAS FILE:
+
 class _ReportHistoryList extends StatelessWidget {
   const _ReportHistoryList();
 
   @override
   Widget build(BuildContext context) {
-    // Simulasi Data Laporan
+    // Simulasi Data Laporan (DITAMBAHKAN FIELD 'description')
     final List<Map<String, dynamic>> reports = [
       {
         "title": "Pohon Tumbang di Jl. Ahmad Yani",
         "date": "24 Des 2024, 10:30",
         "status": "Selesai",
-        "color": Colors.green
+        "color": Colors.green,
+        "description": "Pohon besar tumbang menutupi badan jalan akibat angin kencang. Tim Damkar telah melakukan pembersihan lokasi."
       },
       {
         "title": "Banjir Setinggi 50cm",
         "date": "23 Des 2024, 08:15",
         "status": "Diproses Relawan",
-        "color": Colors.blue
+        "color": Colors.blue,
+        "description": "Air sungai meluap masuk ke pemukiman warga RT 05. Warga membutuhkan bantuan logistik dan perahu karet."
       },
       {
         "title": "Jalan Berlubang Parah",
         "date": "20 Des 2024, 14:00",
         "status": "Menunggu Verifikasi",
-        "color": Colors.orange
+        "color": Colors.orange,
+        "description": "Lubang jalan sedalam 20cm sangat membahayakan pengendara motor, terutama saat malam hari."
       },
     ];
 
@@ -79,6 +85,7 @@ class _ReportHistoryList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header (Tanggal & Status)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -97,15 +104,36 @@ class _ReportHistoryList extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
+                
+                // Judul
                 Text(item['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
                 const Divider(),
-                Row(
-                  children: const [
-                    Icon(Icons.location_on, size: 14, color: Colors.grey),
-                    SizedBox(width: 4),
-                    Text("Lihat Lokasi", style: TextStyle(fontSize: 12, color: Colors.blueAccent)),
-                  ],
+                
+                // BAGIAN TOMBOL LIHAT LOKASI (YANG DI-UPDATE)
+                InkWell(
+                  onTap: () {
+                    // Navigasi ke Halaman Detail
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReportDetailPage(reportData: item),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8), // Efek klik melengkung
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0), // Area klik diperluas sedikit
+                    child: Row(
+                      children: const [
+                        Icon(Icons.location_on, size: 16, color: Colors.blueAccent),
+                        SizedBox(width: 4),
+                        Text("Lihat Lokasi & Detail", style: TextStyle(fontSize: 14, color: Colors.blueAccent, fontWeight: FontWeight.w600)),
+                        Spacer(),
+                        Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                      ],
+                    ),
+                  ),
                 )
               ],
             ),

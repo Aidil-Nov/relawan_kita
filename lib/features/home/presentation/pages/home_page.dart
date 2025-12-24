@@ -3,6 +3,7 @@ import 'package:relawan_kita/features/emergency/presentation/pages/report_page.d
 import 'package:relawan_kita/features/home/presentation/pages/history_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/notification_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/education_page.dart';
+import 'package:relawan_kita/features/disaster_map/presentation/pages/map_page_real.dart';
 // --- IMPORTS ---
 // Pastikan path ini sesuai dengan struktur folder Anda
 import 'package:relawan_kita/core/presentation/pages/dummy_pages.dart';
@@ -33,7 +34,7 @@ class _HomePageState extends State<HomePage> {
     // Inisialisasi daftar halaman
     _pages = [
       _buildHomeContent(),
-      const MapPage(),
+      const MapPageReal(),
       const HistoryPage(), // <-- Sudah diganti
       const ProfilePage(),
     ];

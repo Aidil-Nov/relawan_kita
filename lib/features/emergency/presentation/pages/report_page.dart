@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
 
@@ -41,9 +40,18 @@ class _ReportPageState extends State<ReportPage> {
     super.dispose();
   }
 
-  // Fungsi Submit Laporan
+  // GANTI FUNGSI INI DI report_page.dart
   void _submitReport() async {
     if (_formKey.currentState!.validate()) {
+      // Validasi Tambahan: Pastikan Kategori Dipilih
+      if (_selectedCategory == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Harap pilih jenis kategori bencana.")),
+        );
+        return;
+      }
+
+      // Validasi Foto (Simulasi)
       if (!_isPhotoUploaded) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Harap lampirkan foto bukti kejadian.")),
@@ -53,18 +61,36 @@ class _ReportPageState extends State<ReportPage> {
 
       setState(() => _isLoading = true);
 
-      // Simulasi delay kirim ke server (2 detik)
+      // --- BAGIAN INI YANG PENTING UNTUK DATABASE ---
+      // Kita bungkus semua inputan user menjadi satu paket data (JSON)
+      // Ini nanti tinggal dikirim ke: FirebaseFirestore.instance.collection('reports').add(reportData);
+      Map<String, dynamic> reportData = {
+        "user_id": "DUMMY_USER_ID_123", // Nanti diambil dari User yang login
+        "category": _selectedCategory, // Dari Dropdown
+        "urgency_level": _selectedUrgency, // 0: Rendah, 1: Sedang, 2: Tinggi
+        "location_address": _locationController.text,
+        "description": _descController.text,
+        "photo_url": "path/to/image.jpg", // Nanti URL dari Firebase Storage
+        "status": "Menunggu Verifikasi",
+        "timestamp": DateTime.now().toIso8601String(),
+      };
+
+      print("DATA LAPORAN SIAP KIRIM: $reportData");
+      // ----------------------------------------------
+
+      // Simulasi delay kirim ke server
       await Future.delayed(const Duration(seconds: 2));
 
       setState(() => _isLoading = false);
 
       if (!mounted) return;
 
-      // Tampilkan Dialog Sukses
+      // Tampilkan Dialog Sukses (Kode lama Anda di sini...)
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
+          // ... (Kode UI Dialog biarkan saja) ...
           title: Column(
             children: const [
               Icon(Icons.check_circle, color: Colors.green, size: 60),
@@ -79,8 +105,8 @@ class _ReportPageState extends State<ReportPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(ctx); // Tutup Dialog
-                Navigator.pop(context); // Kembali ke Home
+                Navigator.pop(ctx);
+                Navigator.pop(context);
               },
               child: const Text("Kembali ke Beranda"),
             ),

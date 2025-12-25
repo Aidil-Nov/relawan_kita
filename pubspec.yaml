@@ -30,13 +30,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  # Tambahkan ini:
+  flutter_map: ^7.0.0 # Untuk merender peta OSM
+  latlong2: ^0.9.1 # Untuk menangani koordinat (Latitude/Longitude)
+  url_launcher: ^6.2.0
+  geolocator: ^13.0.0 # Untuk akses GPS
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   share_plus: ^12.0.1
   youtube_player_flutter: ^9.1.3
-
 
 dev_dependencies:
   flutter_test:

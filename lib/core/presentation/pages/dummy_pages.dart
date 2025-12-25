@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:relawan_kita/features/donation/presentation/pages/donation_detail_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/settings_page.dart';
+import 'package:relawan_kita/features/auth/presentation/pages/edit_profile_page.dart';
+import 'package:relawan_kita/features/auth/presentation/pages/certificate_page.dart';
+import 'package:relawan_kita/features/home/presentation/pages/help_page.dart';
 
 // 1. HALAMAN PETA (Simulasi Sebaran Bencana)
 class MapPage extends StatelessWidget {
@@ -399,12 +402,19 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 30),
 
                     // MENU PENGATURAN
-                    _buildProfileMenu(Icons.person, "Edit Profil", () {}),
-                    _buildProfileMenu(
-                      Icons.badge,
-                      "Sertifikat Pelatihan",
-                      () {},
-                    ),
+                    // ... di dalam ProfilePage ...
+
+                    // 1. Menu Sertifikat
+                    _buildProfileMenu(Icons.badge, "Sertifikat Pelatihan", () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CertificatePage(),
+                        ),
+                      );
+                    }),
+
+                    // 2. Menu Pengaturan (Sudah ada sebelumnya)
                     _buildProfileMenu(
                       Icons.settings,
                       "Pengaturan Aplikasi",
@@ -417,10 +427,19 @@ class ProfilePage extends StatelessWidget {
                         );
                       },
                     ),
+
+                    // 3. Menu Bantuan
                     _buildProfileMenu(
                       Icons.help_outline,
                       "Bantuan & Dukungan",
-                      () {},
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HelpPage(),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 20),

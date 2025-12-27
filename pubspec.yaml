@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.18.0
+  
   # Tambahkan ini:
   flutter_map: ^7.0.0 # Untuk merender peta OSM
   latlong2: ^0.9.1 # Untuk menangani koordinat (Latitude/Longitude)

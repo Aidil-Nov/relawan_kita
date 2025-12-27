@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
+import 'package:flutter/services.dart'; // PENTING: Untuk input angka
+import 'package:remixicon/remixicon.dart';
+
+// Import Halaman Waiting Page (Pastikan path-nya benar)
+import 'package:relawan_kita/features/donation/presentation/pages/payment_waiting_page.dart';
 
 class DonationDetailPage extends StatefulWidget {
   final String title;
@@ -20,6 +24,12 @@ class DonationDetailPage extends StatefulWidget {
 }
 
 class _DonationDetailPageState extends State<DonationDetailPage> {
+  // 1. DEFINISI CONTROLLER YANG HILANG
+  final TextEditingController _amountController = TextEditingController();
+  
+  // Variabel untuk menyimpan metode bayar yang dipilih
+  String _selectedPaymentMethod = "bca"; 
+
   // Simulasi Text Cerita
   final String _description = 
       "Bencana banjir bandang telah melumpuhkan aktivitas warga di 3 kecamatan. "
@@ -28,8 +38,13 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
       "1. Makanan Siap Saji\n"
       "2. Selimut & Pakaian\n"
       "3. Obat-obatan & Vitamin\n\n"
-      "Setiap rupiah yang Anda sumbangkan akan langsung disalurkan oleh tim RelawanKita yang sudah berada di lokasi. "
-      "Laporan penggunaan dana akan diupdate secara transparan melalui fitur 'Jurnal Relawan' di aplikasi ini.";
+      "Setiap rupiah yang Anda sumbangkan akan langsung disalurkan oleh tim RelawanKita yang sudah berada di lokasi.";
+
+  @override
+  void dispose() {
+    _amountController.dispose(); // Bersihkan memori
+    super.dispose();
+  }
 
   void _showPaymentSheet() {
     showModalBottomSheet(
@@ -39,105 +54,110 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20, right: 20, top: 24
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Masukan Nominal Donasi", 
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _nominalButton("10rb"),
-                const SizedBox(width: 8),
-                _nominalButton("50rb"),
-                const SizedBox(width: 8),
-                _nominalButton("100rb"),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                prefixText: "Rp ",
-                hintText: "Atau ketik nominal lain...",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.pink),
-                ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 20, right: 20, top: 24
               ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Tutup Sheet
-                  _showSuccessDialog();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text(
-                  "LANJUT PEMBAYARAN", 
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Masukan Nominal Donasi", 
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // PILIHAN NOMINAL CEPAT
+                  Row(
+                    children: [
+                      // Panggil fungsi dengan 2 parameter (Label, Nilai)
+                      _nominalButton("10rb", 10000),
+                      const SizedBox(width: 8),
+                      _nominalButton("50rb", 50000),
+                      const SizedBox(width: 8),
+                      _nominalButton("100rb", 100000),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // INPUT MANUAL
+                  TextField(
+                    controller: _amountController, // Pasang Controller di sini
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Pastikan import services.dart ada
+                    decoration: InputDecoration(
+                      prefixText: "Rp ",
+                      hintText: "Atau ketik nominal lain...",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // PILIH METODE PEMBAYARAN
+                  Text(
+                    "Pilih Metode Pembayaran", 
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)
+                  ),
+                  const SizedBox(height: 8),
+                  _buildPaymentOption(setModalState, "bca", "Bank BCA"),
+                  _buildPaymentOption(setModalState, "bri", "Bank BRI"),
+                  _buildPaymentOption(setModalState, "gopay", "GoPay/QRIS"),
+                  const SizedBox(height: 24),
+                  
+                  // TOMBOL LANJUT
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_amountController.text.isEmpty) {
+                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Isi nominal dulu")));
+                           return;
+                        }
+                        
+                        Navigator.pop(context); // Tutup sheet
+                        
+                        // LANJUT KE HALAMAN WAITING (Pastikan file payment_waiting_page.dart sudah dibuat)
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentWaitingPage(
+                              amount: _amountController.text,
+                              method: _selectedPaymentMethod,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text("BAYAR SEKARANG", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+            );
+          }
+        );
+      },
     );
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon Sukses Remix
-            const Icon(Remix.checkbox_circle_fill, color: Colors.green, size: 80),
-            const SizedBox(height: 16),
-            Text(
-              "Terima Kasih!", 
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Donasi Anda sedang diproses. Notifikasi akan dikirim setelah verifikasi pembayaran.", 
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: const Text("Tutup", style: TextStyle(fontWeight: FontWeight.bold))
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _nominalButton(String label) {
+  // WIDGET TOMBOL NOMINAL (FIXED: Menerima 2 Parameter)
+  Widget _nominalButton(String label, int value) {
     return Expanded(
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: () {
+          // Isi text field otomatis saat tombol diklik
+          _amountController.text = value.toString();
+        },
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -145,6 +165,20 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
         ),
         child: Text(label, style: const TextStyle(color: Colors.black87)),
       ),
+    );
+  }
+
+  Widget _buildPaymentOption(StateSetter setModalState, String value, String label) {
+    return RadioListTile<String>(
+      value: value,
+      groupValue: _selectedPaymentMethod,
+      onChanged: (val) {
+        setModalState(() => _selectedPaymentMethod = val!);
+      },
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      secondary: const Icon(Remix.bank_card_line),
+      activeColor: Colors.pink,
+      contentPadding: EdgeInsets.zero,
     );
   }
 
@@ -163,7 +197,7 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(
-                  color: Colors.white24,
+                  color: Colors.black26,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Remix.arrow_left_line, color: Colors.white),
@@ -176,11 +210,26 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
                 style: const TextStyle(
                   fontSize: 14, 
                   shadows: [Shadow(color: Colors.black, blurRadius: 10)],
-                  fontFamily: 'Poppins', // Paksa Poppins di SliverAppBar
-                  fontWeight: FontWeight.bold
+                  fontFamily: 'Poppins', 
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white
                 )
               ),
-              background: Image.asset(widget.imageUrl, fit: BoxFit.cover),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(widget.imageUrl, fit: BoxFit.cover),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           SliverToBoxAdapter(
@@ -189,7 +238,6 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Progress Bar Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -228,8 +276,6 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Organizer Info
                   Row(
                     children: [
                       Container(
@@ -238,7 +284,6 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
                           color: Colors.grey.shade100,
                           shape: BoxShape.circle
                         ),
-                        // Icon Instansi Pemerintah (Remix)
                         child: const Icon(Remix.government_fill, color: Colors.blueAccent),
                       ),
                       const SizedBox(width: 12),
@@ -253,13 +298,10 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
                         ],
                       ),
                       const Spacer(),
-                      // Verified Badge (Remix)
                       const Icon(Remix.verified_badge_fill, color: Colors.blue, size: 24),
                     ],
                   ),
                   const Divider(height: 40),
-
-                  // Description
                   Text(
                     "Cerita Penggalangan", 
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
@@ -272,8 +314,7 @@ class _DonationDetailPageState extends State<DonationDetailPage> {
                       color: Colors.black87
                     )
                   ),
-                  
-                  const SizedBox(height: 100), // Space for bottom button
+                  const SizedBox(height: 100), 
                 ],
               ),
             ),

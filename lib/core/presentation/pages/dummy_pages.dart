@@ -20,8 +20,8 @@ class DonationPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Galang Dana", 
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18)
+          "Galang Dana",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -48,20 +48,24 @@ class DonationPage extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     "Bantuan Anda sangat berarti bagi mereka yang terdampak.",
-                    style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.pink,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // List Donasi
           _buildDonationItem(
             context,
             title: "Banjir Bandang Demak",
             organizer: "BPBD Demak",
-            image: "assets/images/banjir.jpg", // Pastikan aset ada atau ganti NetworkImage
+            image:
+                "assets/images/banjir.jpg", // Pastikan aset ada atau ganti NetworkImage
             collected: 150,
             target: 500,
           ),
@@ -78,7 +82,8 @@ class DonationPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDonationItem(BuildContext context, {
+  Widget _buildDonationItem(
+    BuildContext context, {
     required String title,
     required String organizer,
     required String image,
@@ -113,13 +118,19 @@ class DonationPage extends StatelessWidget {
           children: [
             // Gambar
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: Container(
                 height: 150,
                 width: double.infinity,
                 color: Colors.grey[300], // Placeholder warna
                 // child: Image.asset(image, fit: BoxFit.cover), // Gunakan ini jika aset siap
-                child: const Icon(Remix.image_line, size: 50, color: Colors.grey),
+                child: const Icon(
+                  Remix.image_line,
+                  size: 50,
+                  color: Colors.grey,
+                ),
               ),
             ),
             Padding(
@@ -127,13 +138,29 @@ class DonationPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Remix.verified_badge_fill, color: Colors.blue, size: 14),
+                      const Icon(
+                        Remix.verified_badge_fill,
+                        color: Colors.blue,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
-                      Text(organizer, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        organizer,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -148,13 +175,26 @@ class DonationPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Terkumpul: Rp ${collected.toInt()}jt", style: const TextStyle(color: Colors.pink, fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text("Target: Rp ${target.toInt()}jt", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        "Terkumpul: Rp ${collected.toInt()}jt",
+                        style: const TextStyle(
+                          color: Colors.pink,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        "Target: Rp ${target.toInt()}jt",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -177,13 +217,42 @@ class ProfilePage extends StatelessWidget {
         centerTitle: false,
         automaticallyImplyLeading: false, // Hilangkan tombol back di tab menu
         actions: [
+          // ... di dalam ProfilePage ...
           IconButton(
             icon: const Icon(Remix.logout_box_r_line, color: Colors.red),
             onPressed: () {
-              // Logic Logout
-              Navigator.pushReplacementNamed(context, '/login');
+              // TAMPILKAN DIALOG KONFIRMASI
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Konfirmasi Keluar"),
+                  content: const Text(
+                    "Apakah Anda yakin ingin keluar dari akun ini?",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context), // Batal
+                      child: const Text("Batal"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Tutup dialog
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/login',
+                        ); // Pindah ke Login
+                      },
+                      child: const Text(
+                        "Ya, Keluar",
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             },
-          )
+          ),
+          // ...
         ],
       ),
       body: SingleChildScrollView(
@@ -195,7 +264,11 @@ class ProfilePage extends StatelessWidget {
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.blueAccent,
-                child: Icon(Remix.user_smile_line, size: 50, color: Colors.white),
+                child: Icon(
+                  Remix.user_smile_line,
+                  size: 50,
+                  color: Colors.white,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -211,28 +284,44 @@ class ProfilePage extends StatelessWidget {
 
             // MENU OPTIONS
             _buildProfileMenu(
-              context, 
-              icon: Remix.user_settings_line, 
+              context,
+              icon: Remix.user_settings_line,
               text: "Edit Profil",
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfilePage(),
+                ),
+              ),
             ),
             _buildProfileMenu(
-              context, 
-              icon: Remix.medal_line, 
+              context,
+              icon: Remix.medal_line,
               text: "Sertifikat Kompetensi",
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CertificatePage())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CertificatePage(),
+                ),
+              ),
             ),
             _buildProfileMenu(
-              context, 
-              icon: Remix.settings_3_line, 
+              context,
+              icon: Remix.settings_3_line,
               text: "Pengaturan",
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              ),
             ),
             _buildProfileMenu(
-              context, 
-              icon: Remix.question_line, 
+              context,
+              icon: Remix.question_line,
               text: "Pusat Bantuan",
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpPage())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HelpPage()),
+              ),
             ),
           ],
         ),
@@ -240,7 +329,12 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileMenu(BuildContext context, {required IconData icon, required String text, required VoidCallback onTap}) {
+  Widget _buildProfileMenu(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+  }) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(10),

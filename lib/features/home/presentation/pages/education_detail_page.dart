@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
 
 class EducationDetailPage extends StatelessWidget {
   final String title;
@@ -19,10 +20,15 @@ class EducationDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Detail Panduan"),
+        title: Text(
+          "Detail Panduan",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        // Icon Back otomatis (Arrow Left), tapi bisa dicustom kalau mau
+        // leading: IconButton(icon: Icon(Remix.arrow_left_line), onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -37,6 +43,7 @@ class EducationDetailPage extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
+                // Icon Besar
                 child: Icon(icon, size: 80, color: color),
               ),
             ),
@@ -45,10 +52,10 @@ class EducationDetailPage extends StatelessWidget {
             // 2. JUDUL PANDUAN
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 24,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 height: 1.3,
+                color: Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
@@ -59,9 +66,12 @@ class EducationDetailPage extends StatelessWidget {
             const SizedBox(height: 20),
 
             // 3. ISI KONTEN (Materi)
-            const Text(
+            Text(
               "Langkah-langkah Keselamatan:",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.black87
+              ),
             ),
             const SizedBox(height: 12),
             
@@ -75,8 +85,8 @@ class EducationDetailPage extends StatelessWidget {
               ),
               child: Text(
                 content,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 15,
                   height: 1.6, // Spasi antar baris agar mudah dibaca
                   color: Colors.black87,
                 ),
@@ -88,16 +98,27 @@ class EducationDetailPage extends StatelessWidget {
             // Tombol Selesai Membaca
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: color,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
-                child: const Text("Saya Mengerti", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                // Icon Centang (Remix Icon)
+                icon: const Icon(Remix.check_double_line, color: Colors.white, size: 20),
+                label: const Text(
+                  "Saya Mengerti",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16
+                  ),
+                ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

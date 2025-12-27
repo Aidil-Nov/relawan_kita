@@ -1,19 +1,56 @@
 import 'package:flutter/material.dart';
-// PENTING: Import halaman detail yang baru saja Anda buat
-import 'education_detail_page.dart'; 
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
+import 'package:youtube_player_flutter/youtube_player_flutter.dart'; // <--- IMPORT YOUTUBE PLAYER
 
+// Import Halaman Detail
+import 'education_detail_page.dart';
 
-class EducationPage extends StatelessWidget {
+// Kita ubah jadi StatefulWidget agar bisa memutar Video
+class EducationPage extends StatefulWidget {
   const EducationPage({super.key});
+
+  @override
+  State<EducationPage> createState() => _EducationPageState();
+}
+
+class _EducationPageState extends State<EducationPage> {
+  late YoutubePlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // ID Video Edukasi Gempa (BNPB)
+    const String videoId = 'tJ5u_9tT-cE'; 
+    
+    _controller = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(
+        autoPlay: false,
+        mute: false,
+        enableCaption: true,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Edukasi Bencana"),
+        title: Text(
+          "Edukasi Bencana",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        // Tombol back pakai Remix Icon
+        // leading: IconButton(icon: Icon(Remix.arrow_left_line), onPressed: () => Navigator.pop(context)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -22,15 +59,28 @@ class EducationPage extends StatelessWidget {
           TextField(
             decoration: InputDecoration(
               hintText: "Cari panduan (misal: Gempa)",
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+              prefixIcon: const Icon(Remix.search_line, color: Colors.grey), // Icon Remix
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
               contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              filled: true,
+              fillColor: Colors.white,
             ),
           ),
           const SizedBox(height: 20),
 
           // Judul Kategori
-          const Text("Panduan Keselamatan", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            "Panduan Keselamatan",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+          ),
           const SizedBox(height: 10),
           
           // --- 1. MENU GEMPA BUMI ---
@@ -38,14 +88,14 @@ class EducationPage extends StatelessWidget {
             context,
             "Apa yang harus dilakukan saat Gempa?",
             "Panduan evakuasi mandiri & titik kumpul.",
-            Icons.vibration,
+            Remix.earthquake_fill, // Icon Gempa
             Colors.orange,
             // ISI MATERI GEMPA:
-            "1. Jangan Panik Tetap tenang dan waspada.\n\n"
-            "2. DROP, COVER, HOLD ON. Menunduk, berlindung di bawah meja yang kuat, dan pegang kaki meja agar tidak bergeser.\n\n"
-            "3. Hindari jendela, cermin, dan lemari kaca yang bisa pecah dan melukai Anda.\n\n"
-            "4. Jika anda diluar ruangan cari tempat terbuka, jauhi gedung tinggi, pohon besar, papan reklame, dan tiang listrik.\n\n"
-            "5. Setelah gempa berhenti Segera keluar menuju titik kumpul evakuasi. Jangan gunakan lift, gunakan tangga darurat."
+            "1. JANGAN PANIK. Tetap tenang dan waspada.\n\n"
+            "2. DROP, COVER, HOLD ON: Menunduk, berlindung di bawah meja yang kuat, dan pegang kaki meja agar tidak bergeser.\n\n"
+            "3. JAUHI KACA: Hindari jendela, cermin, dan lemari kaca yang bisa pecah dan melukai Anda.\n\n"
+            "4. JIKA DI LUAR RUANGAN: Cari tempat terbuka, jauhi gedung tinggi, pohon besar, papan reklame, dan tiang listrik.\n\n"
+            "5. SETELAH GEMPA BERHENTI: Segera keluar menuju titik kumpul evakuasi. Jangan gunakan lift, gunakan tangga darurat."
           ),
 
           // --- 2. MENU P3K LUKA BAKAR ---
@@ -53,14 +103,14 @@ class EducationPage extends StatelessWidget {
             context,
             "P3K Dasar untuk Luka Bakar",
             "Penanganan pertama sebelum medis datang.",
-            Icons.medical_services,
+            Remix.first_aid_kit_fill, // Icon P3K
             Colors.red,
             // ISI MATERI P3K:
-            "1. Segera aliri area luka dengan air mengalir (suhu ruangan) selama 10-20 menit. JANGAN gunakan air es atau air panas.\n\n"
-            "2. Segera lepaskan aksesoris anda cincin, jam tangan, atau gelang di sekitar luka sebelum area tersebut membengkak.\n\n"
-            "3. Jika ada luka, tutup luka Gunakan kassa steril atau kain bersih yang lembab untuk menutup luka. Jangan gunakan kapas karena seratnya bisa menempel.\n\n"
-            "4. JANGAN mengoleskan pasta gigi, mentega, kecap, atau minyak pada luka bakar baru karena dapat memicu infeksi.\n\n"
-            "5. Segera ke Dokter Jika luka bakar luas, mengenai wajah, atau melepuh parah, segera bawa ke IGD terdekat."
+            "1. DINGINKAN: Segera aliri area luka dengan air mengalir (suhu ruangan) selama 10-20 menit. JANGAN gunakan air es atau air panas.\n\n"
+            "2. LEPASKAN AKSESORIS: Segera lepaskan cincin, jam tangan, atau gelang di sekitar luka sebelum area tersebut membengkak.\n\n"
+            "3. TUTUP LUKA: Gunakan kassa steril atau kain bersih yang lembab untuk menutup luka. Jangan gunakan kapas karena seratnya bisa menempel.\n\n"
+            "4. JANGAN OLESKAN: Hindari mengoleskan pasta gigi, mentega, kecap, atau minyak pada luka bakar baru karena dapat memicu infeksi.\n\n"
+            "5. KE DOKTER: Jika luka bakar luas, mengenai wajah, atau melepuh parah, segera bawa ke IGD terdekat."
           ),
 
           // --- 3. MENU TAS SIAGA BENCANA ---
@@ -68,7 +118,7 @@ class EducationPage extends StatelessWidget {
             context,
             "Tas Siaga Bencana (Emergency Kit)",
             "Daftar barang wajib bawa saat evakuasi.",
-            Icons.backpack,
+            Remix.briefcase_4_fill, // Icon Tas/Koper
             Colors.blue,
             // ISI MATERI TAS SIAGA:
             "Siapkan satu tas ransel (Go-Bag) di tempat yang mudah dijangkau, berisi:\n\n"
@@ -80,49 +130,74 @@ class EducationPage extends StatelessWidget {
           ),
           
           const SizedBox(height: 20),
-          const Text("Video Edukasi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            "Video Edukasi", 
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18)
+          ),
           const SizedBox(height: 10),
           
-          // Placeholder Video
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              color: Colors.black12,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.play_circle_fill, size: 50, color: Colors.blueAccent),
-                  SizedBox(height: 8),
-                  Text("Simulasi Banjir 2024"),
-                ],
+          // VIDEO PLAYER YOUTUBE
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: YoutubePlayer(
+              controller: _controller,
+              showVideoProgressIndicator: true,
+              progressIndicatorColor: Colors.blueAccent,
+              progressColors: const ProgressBarColors(
+                playedColor: Colors.blueAccent,
+                handleColor: Colors.blueAccent,
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          const Center(
+            child: Text(
+              "Simulasi Siaga Bencana (Sumber: BNPB)",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 30),
         ],
       ),
     );
   }
 
-  // --- WIDGET HELPER UNTUK MEMBUAT KARTU MENU ---
+  // --- WIDGET HELPER ---
   Widget _buildEduCard(BuildContext context, String title, String subtitle, IconData icon, Color color, String detailContent) {
     return Card(
-      elevation: 2,
+      elevation: 0, // Flat design biar modern
+      color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200), // Border halus
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
         leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-          child: Icon(icon, color: color),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 24),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+        title: Text(
+          title, 
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold, fontSize: 14
+          )
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Text(
+            subtitle, 
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)
+          ),
+        ),
+        trailing: const Icon(Remix.arrow_right_s_line, size: 20, color: Colors.grey), // Icon Panah Remix
         
-        // NAVIGASI: Saat diklik, kirim data ke EducationDetailPage
+        // NAVIGASI
         onTap: () {
           Navigator.push(
             context,
@@ -131,7 +206,7 @@ class EducationPage extends StatelessWidget {
                 title: title,
                 icon: icon,
                 color: color,
-                content: detailContent, // Mengirim isi materi ke halaman detail
+                content: detailContent,
               ),
             ),
           );

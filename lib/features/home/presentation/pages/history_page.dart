@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
-import 'report_detail_pages.dart';
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
+
+// Pastikan file ini ada (Halaman Detail Laporan yang menampilkan peta)
+import 'package:relawan_kita/features/home/presentation/pages/report_detail_pages.dart'; 
+// Jika file di atas belum ada/namanya beda, sesuaikan import-nya.
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // DefaultTabController diperlukan untuk membuat TabBar berfungsi
     return DefaultTabController(
-      length: 2, // Jumlah Tab (Laporan & Donasi)
+      length: 2, 
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text("Aktivitas Saya"),
+          title: Text(
+            "Aktivitas Saya",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+          ),
           centerTitle: true,
-          bottom: const TabBar(
-            labelColor: Colors.blueAccent,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          bottom: TabBar(
+            labelColor: Theme.of(context).primaryColor, // Warna Biru Tema
             unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.blueAccent,
-            tabs: [
+            indicatorColor: Theme.of(context).primaryColor,
+            labelStyle: Theme.of(context).textTheme.labelLarge, // Font Poppins Bold
+            tabs: const [
               Tab(text: "Laporan Pengaduan"),
               Tab(text: "Riwayat Donasi"),
             ],
@@ -36,14 +45,12 @@ class HistoryPage extends StatelessWidget {
 }
 
 // --- WIDGET TAB 1: RIWAYAT LAPORAN ---
-// JANGAN LUPA IMPORT INI DI BAGIAN PALING ATAS FILE:
-
 class _ReportHistoryList extends StatelessWidget {
   const _ReportHistoryList();
 
   @override
   Widget build(BuildContext context) {
-    // Simulasi Data Laporan (DITAMBAHKAN FIELD 'description')
+    // Simulasi Data Laporan
     final List<Map<String, dynamic>> reports = [
       {
         "title": "Pohon Tumbang di Jl. Ahmad Yani",
@@ -89,7 +96,10 @@ class _ReportHistoryList extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(item['date'], style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    Text(
+                      item['date'], 
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])
+                    ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
@@ -98,7 +108,12 @@ class _ReportHistoryList extends StatelessWidget {
                       ),
                       child: Text(
                         item['status'],
-                        style: TextStyle(color: item['color'], fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: item['color'], 
+                          fontSize: 10, 
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins' // Paksa Poppins kalau Theme belum load sempurna
+                        ),
                       ),
                     )
                   ],
@@ -106,14 +121,16 @@ class _ReportHistoryList extends StatelessWidget {
                 const SizedBox(height: 8),
                 
                 // Judul
-                Text(item['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  item['title'], 
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)
+                ),
                 const SizedBox(height: 8),
                 const Divider(),
                 
-                // BAGIAN TOMBOL LIHAT LOKASI (YANG DI-UPDATE)
+                // TOMBOL LIHAT LOKASI (Updated)
                 InkWell(
                   onTap: () {
-                    // Navigasi ke Halaman Detail
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -121,16 +138,25 @@ class _ReportHistoryList extends StatelessWidget {
                       ),
                     );
                   },
-                  borderRadius: BorderRadius.circular(8), // Efek klik melengkung
+                  borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0), // Area klik diperluas sedikit
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Row(
-                      children: const [
-                        Icon(Icons.location_on, size: 16, color: Colors.blueAccent),
-                        SizedBox(width: 4),
-                        Text("Lihat Lokasi & Detail", style: TextStyle(fontSize: 14, color: Colors.blueAccent, fontWeight: FontWeight.w600)),
-                        Spacer(),
-                        Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                      children: [
+                        // Icon Map Pin (Remix)
+                        Icon(Remix.map_pin_2_fill, size: 18, color: Theme.of(context).primaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Lihat Lokasi & Detail", 
+                          style: TextStyle(
+                            fontSize: 14, 
+                            color: Theme.of(context).primaryColor, 
+                            fontWeight: FontWeight.w600
+                          )
+                        ),
+                        const Spacer(),
+                        // Icon Arrow (Remix)
+                        const Icon(Remix.arrow_right_s_line, size: 16, color: Colors.grey),
                       ],
                     ),
                   ),
@@ -185,22 +211,29 @@ class _DonationHistoryList extends StatelessWidget {
                   color: Colors.pink.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.favorite, color: Colors.pink),
+                // Icon Heart (Remix)
+                child: const Icon(Remix.heart_3_fill, color: Colors.pink, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item['campaign'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      item['campaign'], 
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)
+                    ),
                     const SizedBox(height: 4),
-                    Text(item['date'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(
+                      item['date'], 
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)
+                    ),
                   ],
                 ),
               ),
               Text(
                 item['amount'],
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14),
               ),
             ],
           ),

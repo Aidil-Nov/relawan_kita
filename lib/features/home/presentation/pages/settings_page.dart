@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -14,38 +15,41 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Pengaturan")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Pengaturan"),
+        leading: IconButton(
+          icon: const Icon(Remix.arrow_left_line),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: ListView(
         children: [
           SwitchListTile(
+            secondary: const Icon(Remix.notification_3_line),
             title: const Text("Notifikasi Darurat"),
-            subtitle: const Text("Terima peringatan bencana real-time"),
             value: _notifEnabled,
             onChanged: (val) => setState(() => _notifEnabled = val),
             activeColor: Colors.blueAccent,
           ),
-          const Divider(),
           SwitchListTile(
+            secondary: const Icon(Remix.moon_line),
             title: const Text("Mode Gelap"),
             value: _darkMode,
             onChanged: (val) => setState(() => _darkMode = val),
+            activeColor: Colors.blueAccent,
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Remix.lock_password_line),
             title: const Text("Ubah Password"),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(Remix.arrow_right_s_line),
             onTap: () {},
           ),
           ListTile(
-            title: const Text("Bahasa / Language"),
-            subtitle: const Text("Bahasa Indonesia"),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {},
-          ),
-           const Divider(),
-           ListTile(
-            title: const Text("Versi Aplikasi"),
-            subtitle: const Text("1.0.0 (Beta)"),
+            leading: const Icon(Remix.information_line),
+            title: const Text("Tentang Aplikasi"),
+            subtitle: const Text("Versi 1.0.0"),
           ),
         ],
       ),

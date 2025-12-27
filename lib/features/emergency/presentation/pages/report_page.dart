@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -40,7 +41,6 @@ class _ReportPageState extends State<ReportPage> {
     super.dispose();
   }
 
-  // GANTI FUNGSI INI DI report_page.dart
   void _submitReport() async {
     if (_formKey.currentState!.validate()) {
       // Validasi Tambahan: Pastikan Kategori Dipilih
@@ -61,22 +61,19 @@ class _ReportPageState extends State<ReportPage> {
 
       setState(() => _isLoading = true);
 
-      // --- BAGIAN INI YANG PENTING UNTUK DATABASE ---
-      // Kita bungkus semua inputan user menjadi satu paket data (JSON)
-      // Ini nanti tinggal dikirim ke: FirebaseFirestore.instance.collection('reports').add(reportData);
+      // Simulasi Data JSON
       Map<String, dynamic> reportData = {
-        "user_id": "DUMMY_USER_ID_123", // Nanti diambil dari User yang login
-        "category": _selectedCategory, // Dari Dropdown
-        "urgency_level": _selectedUrgency, // 0: Rendah, 1: Sedang, 2: Tinggi
+        "user_id": "DUMMY_USER_ID_123",
+        "category": _selectedCategory,
+        "urgency_level": _selectedUrgency,
         "location_address": _locationController.text,
         "description": _descController.text,
-        "photo_url": "path/to/image.jpg", // Nanti URL dari Firebase Storage
+        "photo_url": "path/to/image.jpg",
         "status": "Menunggu Verifikasi",
         "timestamp": DateTime.now().toIso8601String(),
       };
 
       print("DATA LAPORAN SIAP KIRIM: $reportData");
-      // ----------------------------------------------
 
       // Simulasi delay kirim ke server
       await Future.delayed(const Duration(seconds: 2));
@@ -85,22 +82,34 @@ class _ReportPageState extends State<ReportPage> {
 
       if (!mounted) return;
 
-      // Tampilkan Dialog Sukses (Kode lama Anda di sini...)
+      // Tampilkan Dialog Sukses
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          // ... (Kode UI Dialog biarkan saja) ...
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Column(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.green, size: 60),
-              SizedBox(height: 10),
-              Text("Laporan Diterima"),
+            children: [
+              const Icon(
+                Remix.checkbox_circle_fill,
+                color: Colors.green,
+                size: 60,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Laporan Diterima",
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
             ],
           ),
-          content: const Text(
+          content: Text(
             "Terima kasih atas laporan Anda. \nID Tiket: #RP-2024-889\n\nTim relawan dan dinas terkait akan segera memverifikasi laporan ini.",
             textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           actions: [
             TextButton(
@@ -108,7 +117,10 @@ class _ReportPageState extends State<ReportPage> {
                 Navigator.pop(ctx);
                 Navigator.pop(context);
               },
-              child: const Text("Kembali ke Beranda"),
+              child: const Text(
+                "Kembali ke Beranda",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -119,7 +131,20 @@ class _ReportPageState extends State<ReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Lapor Kejadian")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          "Lapor Kejadian",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Remix.arrow_left_line, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -134,17 +159,24 @@ class _ReportPageState extends State<ReportPage> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.blue.withOpacity(0.3)),
                       ),
                       child: Row(
-                        children: const [
-                          Icon(Icons.info_outline, color: Colors.blue),
-                          SizedBox(width: 10),
+                        children: [
+                          const Icon(
+                            Remix.information_line,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               "Laporan palsu dapat dikenakan sanksi sesuai UU yang berlaku.",
-                              style: TextStyle(fontSize: 12),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Colors.blue[900],
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ),
                         ],
@@ -153,17 +185,19 @@ class _ReportPageState extends State<ReportPage> {
                     const SizedBox(height: 24),
 
                     // 1. Kategori Bencana
-                    const Text(
+                    Text(
                       "Jenis Kejadian",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(
                         hintText: "Pilih kategori...",
+                        prefixIcon: const Icon(
+                          Remix.file_list_3_line,
+                        ), // Icon Kategori
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -176,7 +210,10 @@ class _ReportPageState extends State<ReportPage> {
                       items: _categories.map((String category) {
                         return DropdownMenuItem<String>(
                           value: category,
-                          child: Text(category),
+                          child: Text(
+                            category,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         );
                       }).toList(),
                       onChanged: (val) =>
@@ -185,12 +222,11 @@ class _ReportPageState extends State<ReportPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // 2. Tingkat Urgensi (Custom Widget)
-                    const Text(
+                    // 2. Tingkat Urgensi
+                    Text(
                       "Tingkat Urgensi",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -206,47 +242,48 @@ class _ReportPageState extends State<ReportPage> {
                     const SizedBox(height: 24),
 
                     // 3. Lokasi (Read Only)
-                    const Text(
+                    Text(
                       "Lokasi Kejadian",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _locationController,
-                      readOnly: true, // User tidak bisa edit manual (harus GPS)
+                      readOnly: true, // User tidak bisa edit manual
+                      style: Theme.of(context).textTheme.bodyMedium,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(
-                          Icons.location_on,
+                          Remix.map_pin_2_fill,
                           color: Colors.red,
                         ),
                         suffixIcon: TextButton(
                           onPressed: () {},
-                          child: const Text("Refresh"),
+                          child: const Text(
+                            "Refresh",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         filled: true,
-                        fillColor: Colors.grey[100],
+                        fillColor: Colors.grey[50],
                       ),
                     ),
                     const SizedBox(height: 24),
 
                     // 4. Upload Foto Bukti
-                    const Text(
+                    Text(
                       "Foto Bukti (Wajib)",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () {
-                        // Simulasi Ambil Foto
                         setState(() => _isPhotoUploaded = !_isPhotoUploaded);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -255,30 +292,34 @@ class _ReportPageState extends State<ReportPage> {
                                   ? "Foto berhasil diunggah"
                                   : "Foto dihapus",
                             ),
+                            duration: const Duration(seconds: 1),
                           ),
                         );
                       },
                       child: Container(
-                        height: 150,
+                        height: 160,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: _isPhotoUploaded
                               ? Colors.white
-                              : Colors.grey[200],
+                              : Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _isPhotoUploaded
                                 ? Colors.green
-                                : Colors.grey,
+                                : Colors.grey.shade300,
                             style: _isPhotoUploaded
                                 ? BorderStyle.solid
-                                : BorderStyle.none,
+                                : BorderStyle.solid,
+                            width: 1.5,
                           ),
                           image: _isPhotoUploaded
                               ? const DecorationImage(
-                                  image: AssetImage('assets/images/banjir.jpg'),
+                                  image: AssetImage(
+                                    'assets/images/banjir.jpg',
+                                  ), // Pastikan aset ada
                                   fit: BoxFit.cover,
-                                ) // Pastikan aset ada, atau hapus baris ini jika belum ada
+                                )
                               : null,
                         ),
                         child: _isPhotoUploaded
@@ -286,7 +327,7 @@ class _ReportPageState extends State<ReportPage> {
                                 color: Colors.black38,
                                 child: const Center(
                                   child: Icon(
-                                    Icons.check_circle,
+                                    Remix.checkbox_circle_fill,
                                     color: Colors.white,
                                     size: 50,
                                   ),
@@ -294,47 +335,53 @@ class _ReportPageState extends State<ReportPage> {
                               )
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
+                                children: [
                                   Icon(
-                                    Icons.camera_alt,
+                                    Remix.camera_fill,
                                     size: 40,
-                                    color: Colors.grey,
+                                    color: Colors.grey[400],
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   Text(
                                     "Ketuk untuk ambil foto",
-                                    style: TextStyle(color: Colors.grey),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(color: Colors.grey),
                                   ),
                                 ],
                               ),
                       ),
                     ),
                     if (!_isPhotoUploaded)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 8.0),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
                           "* Foto wajib disertakan untuk validasi.",
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.red),
                         ),
                       ),
 
                     const SizedBox(height: 24),
 
                     // 5. Deskripsi Tambahan
-                    const Text(
+                    Text(
                       "Detail Kejadian",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _descController,
                       maxLines: 4,
+                      style: Theme.of(context).textTheme.bodyMedium,
                       decoration: InputDecoration(
                         hintText:
                             "Ceritakan kronologi atau kondisi detail di lokasi...",
+                        hintStyle: TextStyle(color: Colors.grey[400]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -356,7 +403,7 @@ class _ReportPageState extends State<ReportPage> {
                         onPressed: _submitReport,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Colors.blueAccent,
+                          backgroundColor: Theme.of(context).primaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -371,6 +418,7 @@ class _ReportPageState extends State<ReportPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -389,7 +437,7 @@ class _ReportPageState extends State<ReportPage> {
           decoration: BoxDecoration(
             color: isSelected ? color.withOpacity(0.1) : Colors.white,
             border: Border.all(
-              color: isSelected ? color : Colors.grey.shade300,
+              color: isSelected ? color : Colors.grey.shade200,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(12),
@@ -397,7 +445,7 @@ class _ReportPageState extends State<ReportPage> {
           child: Column(
             children: [
               Icon(
-                Icons.warning_amber_rounded,
+                Remix.alarm_warning_fill, // Icon Urgensi
                 color: isSelected ? color : Colors.grey,
               ),
               const SizedBox(height: 4),
@@ -406,6 +454,8 @@ class _ReportPageState extends State<ReportPage> {
                 style: TextStyle(
                   color: isSelected ? color : Colors.grey,
                   fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  fontFamily: 'Poppins', // Paksa font Poppins
                 ),
               ),
             ],

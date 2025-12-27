@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Untuk getaran (HapticFeedback)
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
 
 class PanicButtonPage extends StatefulWidget {
   const PanicButtonPage({super.key});
@@ -66,13 +67,27 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
 
   void _triggerSOS() {
     HapticFeedback.heavyImpact(); // Getar kuat saat terkirim
-    // Tampilkan dialog konfirmasi atau kirim data ke backend
+    // Tampilkan dialog konfirmasi
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.red[50],
-        title: const Text("SOS TERKIRIM!", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Remix.alarm_warning_fill, color: Colors.white, size: 40),
+            ),
+            const SizedBox(height: 16),
+            const Text("SOS TERKIRIM!", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ],
+        ),
         content: const Text(
           "Lokasi Anda telah dikirim ke Relawan terdekat dan BNPB.\n\nTetap tenang dan cari tempat aman.",
           textAlign: TextAlign.center,
@@ -83,7 +98,7 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
               Navigator.pop(context); // Tutup dialog
               setState(() => _secondsHeld = 0); // Reset
             },
-            child: const Text("Tutup", style: TextStyle(color: Colors.red)),
+            child: const Text("Tutup", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           )
         ],
       ),
@@ -94,19 +109,37 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Sinyal Darurat"), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          "Sinyal Darurat",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Remix.arrow_left_line, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               "TEKAN & TAHAN 3 DETIK",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey
+              ),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               "Hanya gunakan saat kondisi gawat darurat!",
-              style: TextStyle(fontSize: 14, color: Colors.red),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.red,
+                fontWeight: FontWeight.bold
+              ),
             ),
             const SizedBox(height: 50),
 
@@ -132,7 +165,7 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
                           height: 250,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.red.withOpacity(0.2),
+                            color: Colors.red.withOpacity(0.1),
                           ),
                         ),
                         // Tombol Utama
@@ -142,13 +175,13 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: const LinearGradient(
-                              colors: [Colors.redAccent, Colors.red],
+                              colors: [Colors.redAccent, Color(0xFFD32F2F)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.red.withOpacity(0.5),
+                                color: Colors.red.withOpacity(0.4),
                                 blurRadius: 20,
                                 spreadRadius: 5,
                                 offset: const Offset(0, 10),
@@ -161,7 +194,7 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
                                     "${_requiredSeconds - _secondsHeld}", // Hitung mundur
                                     style: const TextStyle(fontSize: 80, color: Colors.white, fontWeight: FontWeight.bold),
                                   )
-                                : const Icon(Icons.sos, size: 80, color: Colors.white),
+                                : const Icon(Remix.alarm_warning_fill, size: 80, color: Colors.white), // Icon Remix
                           ),
                         ),
                         // Indikator Progress Lingkaran
@@ -188,14 +221,20 @@ class _PanicButtonPageState extends State<PanicButtonPage> with SingleTickerProv
                padding: const EdgeInsets.all(16),
                margin: const EdgeInsets.symmetric(horizontal: 24),
                decoration: BoxDecoration(
-                 color: Colors.grey[100],
-                 borderRadius: BorderRadius.circular(12)
+                 color: Colors.grey[50],
+                 borderRadius: BorderRadius.circular(12),
+                 border: Border.all(color: Colors.grey.shade200)
                ),
                child: Row(
-                 children: const [
-                   Icon(Icons.info_outline, color: Colors.blueGrey),
-                   SizedBox(width: 10),
-                   Expanded(child: Text("Lokasi GPS Anda akan otomatis dikirim bersama sinyal ini."))
+                 children: [
+                   const Icon(Remix.information_line, color: Colors.grey),
+                   const SizedBox(width: 10),
+                   Expanded(
+                     child: Text(
+                       "Lokasi GPS Anda akan otomatis dikirim bersama sinyal ini ke server pusat.",
+                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])
+                     )
+                   )
                  ],
                ),
              )

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart';
+
+// --- IMPORTS HALAMAN LAIN ---
 import 'package:relawan_kita/features/emergency/presentation/pages/report_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/history_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/notification_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/education_page.dart';
 import 'package:relawan_kita/features/disaster_map/presentation/pages/map_page_real.dart';
-// --- IMPORTS ---
-// Pastikan path ini sesuai dengan struktur folder Anda
 import 'package:relawan_kita/core/presentation/pages/dummy_pages.dart';
 import 'package:relawan_kita/features/emergency/presentation/pages/panic_button_page.dart';
+import 'transparency_detail_page.dart'; // Pastikan path ini benar
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,63 +20,58 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // --- STATE VARIABLES ---
-  int _selectedIndex = 0; // Index aktif untuk BottomNavigationBar
+  int _selectedIndex = 0;
 
-  // Data Simulasi (Nanti bisa diganti dengan data dari API/Backend)
+  // Data Simulasi
   final String _location = "Pontianak, Kalimantan Barat";
   final String _disasterStatus = "WASPADA BANJIR";
   final Color _statusColor = Colors.orange;
 
-  // Daftar Halaman untuk Navigasi Bawah
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-    // Inisialisasi daftar halaman
-    _pages = [
-      _buildHomeContent(),
-      const MapPageReal(),
-      const HistoryPage(), // <-- Sudah diganti
-      const ProfilePage(),
-    ];
-  }
+  // HAPUS LIST _pages DARI SINI
+  // HAPUS initState()
 
   @override
   Widget build(BuildContext context) {
+    // --- SOLUSI: DEFINISIKAN HALAMAN DI SINI (DALAM BUILD) ---
+    // Ini aman karena 'context' sudah tersedia di dalam build()
+    final List<Widget> pages = [
+      _buildHomeContent(), // Halaman 0: Home (Dashboard)
+      const MapPageReal(), // Halaman 1: Peta
+      const HistoryPage(), // Halaman 2: Riwayat
+      const ProfilePage(), // Halaman 3: Profil
+    ];
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      // Gunakan pages[_selectedIndex]
+      body: pages[_selectedIndex],
 
-      // LOGIKA SWITCHING HALAMAN (Jantung Navigasi)
-      body: _pages[_selectedIndex],
-
-      // BOTTOM NAVIGATION BAR
+      // --- BOTTOM NAVIGATION BAR ---
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
+        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
         backgroundColor: Colors.white,
         elevation: 3,
-        indicatorColor: Colors.blueAccent.withOpacity(0.2),
+        indicatorColor: Colors.blueAccent.withOpacity(0.1),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_filled, color: Colors.blueAccent),
+            icon: Icon(Remix.home_4_line),
+            selectedIcon: Icon(Remix.home_4_fill, color: Colors.blueAccent),
             label: 'Beranda',
           ),
           NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map, color: Colors.blueAccent),
+            icon: Icon(Remix.map_2_line),
+            selectedIcon: Icon(Remix.map_2_fill, color: Colors.blueAccent),
             label: 'Peta',
           ),
           NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history, color: Colors.blueAccent),
+            icon: Icon(Remix.history_line),
+            selectedIcon: Icon(Remix.history_fill, color: Colors.blueAccent),
             label: 'Riwayat',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: Colors.blueAccent),
+            icon: Icon(Remix.user_3_line),
+            selectedIcon: Icon(Remix.user_3_fill, color: Colors.blueAccent),
             label: 'Profil',
           ),
         ],
@@ -83,7 +80,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ===========================================================================
-  // BAGIAN 1: KONTEN DASHBOARD (HOME)
+  // KONTEN DASHBOARD (HOME)
   // ===========================================================================
   Widget _buildHomeContent() {
     return SafeArea(
@@ -92,31 +89,32 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Header (Lokasi & Notif)
+            // 1. Header
             _buildHeader(),
             const SizedBox(height: 20),
 
-            // 2. Kartu Status Bencana (E-Gov Info)
+            // 2. Kartu Status Bencana
             _buildStatusCard(),
             const SizedBox(height: 24),
 
-            // 3. Tombol Emergency (Akses Cepat)
-            const Text(
+            // 3. Tombol Emergency
+            Text(
               "Aksi Cepat",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              // Error sebelumnya terjadi karena baris ini dipanggil di initState
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18), 
             ),
             const SizedBox(height: 12),
             _buildEmergencyButton(context),
             const SizedBox(height: 24),
 
-            // 4. Grid Menu (Navigasi Fitur Lain)
+            // 4. Grid Menu
             _buildMenuGrid(),
             const SizedBox(height: 24),
 
-            // 5. List Transparansi (Social Proof)
-            const Text(
+            // 5. List Transparansi
+            Text(
               "Transparansi Bantuan Terkini",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 12),
             _buildLiveFeedItem(
@@ -134,20 +132,15 @@ class _HomePageState extends State<HomePage> {
               "Terkumpul untuk Gempa X",
               "1 jam lalu",
             ),
-            const SizedBox(
-              height: 80,
-            ), // Padding bawah agar tidak tertutup navbar
+            const SizedBox(height: 80),
           ],
         ),
       ),
     );
   }
 
-  // ===========================================================================
-  // BAGIAN 2: WIDGET-WIDGET PENDUKUNG (UI COMPONENTS)
-  // ===========================================================================
+  // --- WIDGET PENDUKUNG ---
 
-  // HEADER: Menampilkan Lokasi & Profil Singkat
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,25 +148,15 @@ class _HomePageState extends State<HomePage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Halo, Warga!",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
+            Text("Halo, Warga!", style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(
-                  Icons.location_on,
-                  color: Colors.blueAccent,
-                  size: 18,
-                ),
+                const Icon(Remix.map_pin_2_fill, color: Colors.blueAccent, size: 18),
                 const SizedBox(width: 4),
                 Text(
                   _location,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16),
                 ),
               ],
             ),
@@ -183,15 +166,12 @@ class _HomePageState extends State<HomePage> {
           children: [
             IconButton(
               onPressed: () {
-                // NAVIGASI KE NOTIFIKASI
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const NotificationPage()),
                 );
               },
-              icon: const Icon(Icons.notifications_outlined, size: 28),
+              icon: const Icon(Remix.notification_3_line, size: 28),
             ),
             Positioned(
               right: 12,
@@ -211,7 +191,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // STATUS CARD: Informasi E-Gov Realtime
   Widget _buildStatusCard() {
     return Container(
       width: double.infinity,
@@ -233,11 +212,7 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.white,
-            size: 40,
-          ),
+          const Icon(Remix.alarm_warning_fill, color: Colors.white, size: 40),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -268,7 +243,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // EMERGENCY BUTTON: Link ke Panic Button
   Widget _buildEmergencyButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
@@ -292,7 +266,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.red,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.sos, color: Colors.white, size: 30),
+              child: const Icon(Remix.pulse_fill, color: Colors.white, size: 30),
             ),
             const SizedBox(width: 16),
             const Expanded(
@@ -314,49 +288,33 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.red, size: 16),
+            const Icon(Remix.arrow_right_s_line, color: Colors.red, size: 24),
           ],
         ),
       ),
     );
   }
 
-  // MENU GRID: Navigasi Ikon Utama
   Widget _buildMenuGrid() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // 1. Tombol DONASI -> Ke Halaman List Donasi
-        _menuItem(Icons.volunteer_activism, "Donasi", Colors.pink, () {
+        _menuItem(Remix.hand_heart_fill, "Donasi", Colors.pink, () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const DonationPage(),
-            ), // Pastikan DonationPage di-import
+            MaterialPageRoute(builder: (context) => const DonationPage()),
           );
         }),
-
-        // 2. Tombol LAPOR -> Ke Halaman Form Laporan
-        _menuItem(Icons.assignment_add, "Lapor", Colors.blue, () {
+        _menuItem(Remix.megaphone_fill, "Lapor", Colors.blue, () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const ReportPage(),
-            ), // Pastikan ReportPage di-import
+            MaterialPageRoute(builder: (context) => const ReportPage()),
           );
         }),
-
-        // 3. Tombol PETA -> Pindah ke Tab Peta (Index 1)
-        _menuItem(Icons.map, "Peta", Colors.green, () {
-          setState(() {
-            _selectedIndex =
-                1; // Mengubah state agar tab bawah pindah ke "Peta"
-          });
+        _menuItem(Remix.map_fill, "Peta", Colors.green, () {
+          setState(() => _selectedIndex = 1);
         }),
-
-        // 4. Tombol EDUKASI -> Placeholder (Belum ada halaman)
-        _menuItem(Icons.menu_book, "Edukasi", Colors.purple, () {
-          // NAVIGASI KE EDUKASI
+        _menuItem(Remix.book_read_fill, "Edukasi", Colors.purple, () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const EducationPage()),
@@ -366,13 +324,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ITEM MENU (Helper untuk _buildMenuGrid)
-  Widget _menuItem(
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
+  Widget _menuItem(IconData icon, String label, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -395,40 +347,72 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // LIST ITEM: Transparansi Bantuan
   Widget _buildLiveFeedItem(String title, String subtitle, String time) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TransparencyDetailPage(
+                  title: title,
+                  subtitle: subtitle,
+                  time: time,
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                const Icon(Remix.checkbox_circle_fill, color: Colors.green, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                    const SizedBox(height: 4),
+                    const Icon(Remix.arrow_right_s_line, size: 16, color: Colors.grey),
+                  ],
                 ),
               ],
             ),
           ),
-          Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-        ],
+        ),
       ),
     );
   }

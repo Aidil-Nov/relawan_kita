@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
+import 'package:remixicon/remixicon.dart';
+
+// Import Halaman Detail yang baru dibuat
+import 'package:relawan_kita/features/home/presentation/pages/notification_detail_page.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
@@ -10,25 +13,25 @@ class NotificationPage extends StatelessWidget {
     final List<Map<String, dynamic>> notifications = [
       {
         "title": "PERINGATAN DINI: Siaga Banjir",
-        "body": "Debit air di Bendungan A meningkat. Warga di bantaran sungai harap waspada.",
+        "body": "Debit air di Bendungan A meningkat drastis akibat curah hujan tinggi. Warga di bantaran sungai harap segera mengamankan barang berharga dan bersiap evakuasi jika sirine berbunyi.",
         "time": "Baru saja",
-        "type": "alert", // Tipe bahaya
+        "type": "alert", 
       },
       {
         "title": "Laporan Diterima",
-        "body": "Laporan kerusakan jalan Anda sedang diverifikasi oleh petugas.",
+        "body": "Laporan kerusakan jalan yang Anda kirimkan telah kami terima. Saat ini tim relawan sedang melakukan verifikasi ke lokasi kejadian.",
         "time": "10 menit lalu",
         "type": "info",
       },
       {
         "title": "Donasi Berhasil Disalurkan",
-        "body": "Bantuan Anda telah sampai di Posko Pengungsian B.",
+        "body": "Terima kasih! Bantuan dana Anda sebesar Rp 100.000 telah disalurkan untuk korban Gempa Cianjur di Posko Pengungsian B.",
         "time": "1 jam lalu",
         "type": "success",
       },
       {
         "title": "Cuaca Ekstrem Besok",
-        "body": "BMKG memprediksi hujan lebat disertai angin kencang di wilayah Anda.",
+        "body": "BMKG memprediksi hujan lebat disertai angin kencang di wilayah Anda mulai pukul 14.00 WIB besok. Hindari berteduh di bawah pohon besar.",
         "time": "2 jam lalu",
         "type": "info",
       },
@@ -44,7 +47,10 @@ class NotificationPage extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        // leading: IconButton(icon: Icon(Remix.arrow_left_line), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: const Icon(Remix.arrow_left_line), 
+          onPressed: () => Navigator.pop(context)
+        ),
       ),
       body: ListView.separated(
         itemCount: notifications.length,
@@ -54,7 +60,7 @@ class NotificationPage extends StatelessWidget {
           final isAlert = item['type'] == 'alert';
 
           return Container(
-            color: isAlert ? Colors.red.withOpacity(0.05) : Colors.white, // Highlight soft merah
+            color: isAlert ? Colors.red.withOpacity(0.05) : Colors.white, 
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               leading: Container(
@@ -78,6 +84,8 @@ class NotificationPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     item['body'],
+                    maxLines: 2, // Batasi 2 baris di list
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.black54,
                       fontSize: 13
@@ -95,7 +103,18 @@ class NotificationPage extends StatelessWidget {
               ),
               isThreeLine: true,
               onTap: () {
-                // Logic mark as read
+                // --- NAVIGASI KE DETAIL PAGE ---
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NotificationDetailPage(
+                      title: item['title'],
+                      body: item['body'],
+                      time: item['time'],
+                      type: item['type'],
+                    ),
+                  ),
+                );
               },
             ),
           );
@@ -104,7 +123,7 @@ class NotificationPage extends StatelessWidget {
     );
   }
 
-  // Helper Icon dengan Remix Icon
+  // Helper Icon
   Widget _getIcon(String type) {
     switch (type) {
       case 'alert':

@@ -10,13 +10,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _notifEnabled = true;
-  bool _darkMode = false;
 
   // --- LOGIKA UBAH PASSWORD ---
   void _showChangePasswordSheet() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Supaya keyboard tidak menutupi
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -98,6 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: ListView(
         children: [
+          // Opsi Notifikasi
           SwitchListTile(
             secondary: const Icon(Remix.notification_3_line),
             title: const Text("Notifikasi Darurat"),
@@ -105,25 +105,23 @@ class _SettingsPageState extends State<SettingsPage> {
             onChanged: (val) => setState(() => _notifEnabled = val),
             activeColor: Colors.blueAccent,
           ),
-          SwitchListTile(
-            secondary: const Icon(Remix.moon_line),
-            title: const Text("Mode Gelap"),
-            value: _darkMode,
-            onChanged: (val) => setState(() => _darkMode = val),
-            activeColor: Colors.blueAccent,
-          ),
+          
           const Divider(),
+          
+          // Opsi Ubah Password
           ListTile(
             leading: const Icon(Remix.lock_password_line),
             title: const Text("Ubah Password"),
             trailing: const Icon(Remix.arrow_right_s_line),
-            onTap: _showChangePasswordSheet, // Panggil fungsi di sini
+            onTap: _showChangePasswordSheet,
           ),
+          
+          // Opsi Tentang Aplikasi
           ListTile(
             leading: const Icon(Remix.information_line),
             title: const Text("Tentang Aplikasi"),
             subtitle: const Text("Versi 1.0.0"),
-            onTap: _showAboutDialog, // Panggil fungsi di sini
+            onTap: _showAboutDialog,
           ),
         ],
       ),

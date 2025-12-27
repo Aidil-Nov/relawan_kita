@@ -40,6 +40,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   share_plus: ^12.0.1
   youtube_player_flutter: ^9.1.3
+  google_fonts: ^6.1.0
+  remixicon: ^1.4.1
 
 dev_dependencies:
   flutter_test:

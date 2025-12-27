@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:relawan_kita/features/auth/presentation/pages/splash_page.dart';
-
+import 'core/theme/app_theme.dart'; // Import file tema tadi
 // --- IMPORT HALAMAN YANG SUDAH KITA BUAT ---
 // PENTING: Ganti 'relawankita' dengan nama project Anda jika berbeda
 import 'package:relawan_kita/features/auth/presentation/pages/login_page.dart';
@@ -22,9 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // ... (ThemeData biarkan saja seperti sebelumnya) ...
-      theme: ThemeData(
-        // ... kode tema Anda ...
-      ),
+      theme: AppTheme.lightTheme,
 
       // --- PERUBAHAN DI SINI ---
 

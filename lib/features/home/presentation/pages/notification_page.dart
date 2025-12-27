@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
@@ -25,31 +26,76 @@ class NotificationPage extends StatelessWidget {
         "time": "1 jam lalu",
         "type": "success",
       },
+      {
+        "title": "Cuaca Ekstrem Besok",
+        "body": "BMKG memprediksi hujan lebat disertai angin kencang di wilayah Anda.",
+        "time": "2 jam lalu",
+        "type": "info",
+      },
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Notifikasi")),
-      body: ListView.builder(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          "Notifikasi",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        // leading: IconButton(icon: Icon(Remix.arrow_left_line), onPressed: () => Navigator.pop(context)),
+      ),
+      body: ListView.separated(
         itemCount: notifications.length,
+        separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
         itemBuilder: (context, index) {
           final item = notifications[index];
+          final isAlert = item['type'] == 'alert';
+
           return Container(
-            color: item['type'] == 'alert' ? Colors.red[50] : Colors.white, // Highlight merah jika darurat
+            color: isAlert ? Colors.red.withOpacity(0.05) : Colors.white, // Highlight soft merah
             child: ListTile(
-              leading: _getIcon(item['type']),
-              title: Text(item['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isAlert ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: _getIcon(item['type']),
+              ),
+              title: Text(
+                item['title'], 
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isAlert ? Colors.red : Colors.black87
+                )
+              ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  Text(item['body']),
-                  const SizedBox(height: 4),
-                  Text(item['time'], style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                  Text(
+                    item['body'],
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black54,
+                      fontSize: 13
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item['time'], 
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 11, 
+                      color: Colors.grey
+                    )
+                  ),
                 ],
               ),
               isThreeLine: true,
               onTap: () {
-                // Nanti saat ada database, ini akan update status 'read'
+                // Logic mark as read
               },
             ),
           );
@@ -58,14 +104,15 @@ class NotificationPage extends StatelessWidget {
     );
   }
 
+  // Helper Icon dengan Remix Icon
   Widget _getIcon(String type) {
     switch (type) {
       case 'alert':
-        return const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30);
+        return const Icon(Remix.alarm_warning_fill, color: Colors.red, size: 24);
       case 'success':
-        return const Icon(Icons.check_circle, color: Colors.green, size: 30);
+        return const Icon(Remix.checkbox_circle_fill, color: Colors.green, size: 24);
       default:
-        return const Icon(Icons.info, color: Colors.blue, size: 30);
+        return const Icon(Remix.information_fill, color: Colors.blue, size: 24);
     }
   }
 }

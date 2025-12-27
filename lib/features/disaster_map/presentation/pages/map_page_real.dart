@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
 
 class MapPageReal extends StatefulWidget {
   const MapPageReal({super.key});
@@ -13,15 +14,13 @@ class MapPageReal extends StatefulWidget {
 
 class _MapPageRealState extends State<MapPageReal> {
   final MapController _mapController = MapController();
-  final TextEditingController _searchController =
-      TextEditingController(); // Controller Input
+  final TextEditingController _searchController = TextEditingController();
 
   final LatLng _centerLocation = const LatLng(-0.026330, 109.342504);
   LatLng? _userLocation;
 
-  // State Filter
   String _activeFilter = "Semua";
-  String _searchQuery = ""; // Menyimpan teks yang diketik user
+  String _searchQuery = "";
 
   // MASTER DATA
   final List<Map<String, dynamic>> _allPoints = [
@@ -32,6 +31,7 @@ class _MapPageRealState extends State<MapPageReal> {
       "type": "Banjir",
       "desc": "Air setinggi 50cm di jalan utama.",
       "color": Colors.red,
+      "icon": Remix.rainy_fill, // Icon Banjir
     },
     {
       "id": "2",
@@ -40,6 +40,7 @@ class _MapPageRealState extends State<MapPageReal> {
       "type": "Posko",
       "desc": "Dapur Umum & Pos Medis 24 Jam.",
       "color": Colors.green,
+      "icon": Remix.tent_fill, // Icon Tenda/Posko
     },
     {
       "id": "3",
@@ -48,6 +49,7 @@ class _MapPageRealState extends State<MapPageReal> {
       "type": "Longsor",
       "desc": "Tebing rawan longsor, harap hindari.",
       "color": Colors.orange,
+      "icon": Remix.alert_fill, // Icon Bahaya
     },
     {
       "id": "4",
@@ -56,28 +58,19 @@ class _MapPageRealState extends State<MapPageReal> {
       "type": "Posko",
       "desc": "Tempat Pengungsian Balai Desa.",
       "color": Colors.green,
+      "icon": Remix.tent_fill,
     },
   ];
 
-  // LOGIKA FILTER GANDA (CHIP + SEARCH BAR)
   List<Map<String, dynamic>> get _displayedMarkers {
     return _allPoints.where((point) {
-      // 1. Cek Kategori (Chip)
-      bool matchesCategory =
-          _activeFilter == "Semua" || point['type'] == _activeFilter;
-
-      // 2. Cek Search Text (Nama Tipe ATAU Deskripsi)
-      // Kita gunakan .toLowerCase() agar pencarian tidak peduli huruf besar/kecil
+      bool matchesCategory = _activeFilter == "Semua" || point['type'] == _activeFilter;
       bool matchesSearch =
           point['type'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
           point['desc'].toLowerCase().contains(_searchQuery.toLowerCase());
-
-      // Marker muncul HANYA JIKA kedua syarat terpenuhi
       return matchesCategory && matchesSearch;
     }).toList();
   }
-
-  // --- LOGIKA LAINNYA TETAP SAMA ---
 
   Future<void> _getUserLocation() async {
     bool serviceEnabled;
@@ -85,10 +78,7 @@ class _MapPageRealState extends State<MapPageReal> {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("GPS mati. Harap nyalakan GPS.")),
-        );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("GPS mati. Harap nyalakan GPS.")));
       return;
     }
 
@@ -100,9 +90,7 @@ class _MapPageRealState extends State<MapPageReal> {
 
     if (permission == LocationPermission.deniedForever) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Mencari lokasi Anda...")));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mencari lokasi Anda...")));
     Position position = await Geolocator.getCurrentPosition();
 
     setState(() {
@@ -113,23 +101,17 @@ class _MapPageRealState extends State<MapPageReal> {
   }
 
   Future<void> _openGoogleMaps(double lat, double long) async {
-    final Uri googleUrl = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=$lat,$long?daddr=$lat,$long',
-    ); // Tambah daddr agar lebih akurat
+    final Uri googleUrl = Uri.parse('http://googleusercontent.com/maps.google.com/?daddr=$lat,$long');
     try {
       await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
     } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Tidak dapat membuka peta.")),
-        );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tidak dapat membuka peta.")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Tambahkan Listener agar keyboard turun saat tap peta
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
@@ -140,9 +122,7 @@ class _MapPageRealState extends State<MapPageReal> {
               options: MapOptions(
                 initialCenter: _centerLocation,
                 initialZoom: 13.0,
-                onTap: (_, __) => FocusScope.of(
-                  context,
-                ).unfocus(), // Tutup keyboard saat klik peta
+                onTap: (_, __) => FocusScope.of(context).unfocus(),
               ),
               children: [
                 TileLayer(
@@ -154,54 +134,46 @@ class _MapPageRealState extends State<MapPageReal> {
                     ..._displayedMarkers.map((point) {
                       return Marker(
                         point: LatLng(point['lat'], point['long']),
-                        width: 45,
-                        height: 45,
+                        width: 50,
+                        height: 50,
                         child: GestureDetector(
                           onTap: () => _showLocationDetail(context, point),
-                          child: Icon(
-                            Icons.location_on,
-                            color: point['color'],
-                            size: 45,
-                            shadows: const [
-                              Shadow(color: Colors.black38, blurRadius: 5),
-                            ],
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]
+                            ),
+                            child: Icon(
+                              point['icon'], // Icon Dinamis dari Data
+                              color: point['color'],
+                              size: 30,
+                            ),
                           ),
                         ),
                       );
                     }).toList(),
+                    
+                    // Marker User
                     if (_userLocation != null)
                       Marker(
                         point: _userLocation!,
                         width: 60,
                         height: 60,
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.3),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.blueAccent,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 5,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.blueAccent,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
                             ),
-                          ],
+                            child: const Icon(Remix.user_location_fill, color: Colors.white, size: 24),
+                          ),
                         ),
                       ),
                   ],
@@ -209,35 +181,29 @@ class _MapPageRealState extends State<MapPageReal> {
               ],
             ),
 
-            // B. SEARCH BAR & FILTER (YANG DIPERBAIKI)
+            // B. SEARCH BAR & FILTER
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    // SEARCH BAR AKTIF
+                    // SEARCH BAR
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black12, blurRadius: 10),
-                        ],
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
                       ),
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (value) {
-                          // Update State saat user mengetik
-                          setState(() {
-                            _searchQuery = value;
-                          });
-                        },
+                        onChanged: (value) => setState(() => _searchQuery = value),
                         decoration: InputDecoration(
                           hintText: "Cari posko, dapur umum...",
-                          prefixIcon: const Icon(Icons.search),
+                          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                          prefixIcon: const Icon(Remix.search_line, color: Colors.grey),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear),
+                                  icon: const Icon(Remix.close_circle_fill, color: Colors.grey),
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _searchQuery = "");
@@ -245,10 +211,7 @@ class _MapPageRealState extends State<MapPageReal> {
                                 )
                               : null,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 15,
-                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                         ),
                       ),
                     ),
@@ -278,7 +241,7 @@ class _MapPageRealState extends State<MapPageReal> {
               child: FloatingActionButton(
                 backgroundColor: Colors.white,
                 onPressed: _getUserLocation,
-                child: const Icon(Icons.my_location, color: Colors.blueAccent),
+                child: const Icon(Remix.focus_3_line, color: Colors.blueAccent),
               ),
             ),
           ],
@@ -306,6 +269,7 @@ class _MapPageRealState extends State<MapPageReal> {
             color: isSelected ? Colors.white : Colors.black87,
             fontWeight: FontWeight.bold,
             fontSize: 12,
+            fontFamily: 'Poppins', // Paksa font Poppins
           ),
         ),
       ),
@@ -329,35 +293,43 @@ class _MapPageRealState extends State<MapPageReal> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.location_on, color: data['color'], size: 30),
-                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: data['color'].withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(data['icon'], color: data['color'], size: 24),
+                  ),
+                  const SizedBox(width: 12),
                   Text(
                     data['type'],
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Remix.close_line),
                   ),
                 ],
               ),
               const Divider(),
               const SizedBox(height: 10),
-              Text(data['desc'], style: const TextStyle(fontSize: 16)),
+              Text(
+                data['desc'], 
+                style: Theme.of(context).textTheme.bodyLarge
+              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () => _openGoogleMaps(data['lat'], data['long']),
-                  icon: const Icon(Icons.turn_right),
-                  label: const Text("Navigasi (Google Maps)"),
+                  icon: const Icon(Remix.direction_fill, color: Colors.white), // Icon Navigasi
+                  label: const Text("Navigasi (Google Maps)", style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

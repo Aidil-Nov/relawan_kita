@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
- // Import package share_plus
+import 'package:share_plus/share_plus.dart'; // Import package share_plus
+import 'package:remixicon/remixicon.dart';   // <--- IMPORT REMIX ICON
 
 class ReportDetailPage extends StatelessWidget {
   final Map<String, dynamic> reportData;
@@ -22,9 +22,14 @@ class ReportDetailPage extends StatelessWidget {
         elevation: 0,
         leading: Container(
           margin: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+            color: Colors.white, 
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]
+          ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            // Icon Back Remix
+            icon: const Icon(Remix.arrow_left_line, color: Colors.black),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -61,9 +66,13 @@ class ReportDetailPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [const BoxShadow(blurRadius: 5, color: Colors.black26)]
                         ),
-                        child: Text(reportData['title'], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          reportData['title'], 
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)
+                        ),
                       ),
-                      const Icon(Icons.location_on, color: Colors.red, size: 40),
+                      // Icon Map Pin Remix
+                      const Icon(Remix.map_pin_2_fill, color: Colors.red, size: 40),
                     ],
                   ),
                 ),
@@ -94,48 +103,68 @@ class ReportDetailPage extends StatelessWidget {
                     ),
                     child: Text(
                       reportData['status'],
-                      style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: statusColor, 
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
                   // Judul & Tanggal
-                  Text(reportData['title'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(
+                    reportData['title'], 
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Colors.black87
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                      // Icon Calendar Remix
+                      const Icon(Remix.calendar_line, size: 16, color: Colors.grey),
                       const SizedBox(width: 6),
-                      Text(reportData['date'], style: TextStyle(color: Colors.grey[600])),
+                      Text(
+                        reportData['date'], 
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])
+                      ),
                     ],
                   ),
                   const Divider(height: 40),
 
                   // Deskripsi
-                  const Text("Kronologi Kejadian", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    "Kronologi Kejadian", 
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 16
+                    )
+                  ),
                   const SizedBox(height: 10),
                   Text(
                     reportData['description'] ?? "Tidak ada deskripsi rinci.",
-                    style: const TextStyle(height: 1.5, color: Colors.black87),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.6, 
+                      color: Colors.black87
+                    ),
                   ),
                   
                   const Spacer(),
                   
-                  // Tombol Share (SUDAH BERFUNGSI)
+                  // Tombol Share (Remix Icon)
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        // 1. Ambil Data dari variabel reportData
                         final String title = reportData['title'];
                         final String status = reportData['status'];
                         final String date = reportData['date'];
                         final String desc = reportData['description'] ?? "Segera butuh bantuan.";
-                        
-                        // 2. Link Google Maps Simulasi
-                        const String mapsLink = "https://maps.google.com/?q=Lokasi+Bencana";
+                        const String mapsLink = "https://maps.google.com/?q=-0.026,109.342"; // Contoh Pontianak
 
-                        // 3. Susun Pesan yang Rapi
                         final String message = 
                           "🚨 LAPORAN BENCANA - RELAWAN KITA 🚨\n\n"
                           "📌 Judul: $title\n"
@@ -145,14 +174,16 @@ class ReportDetailPage extends StatelessWidget {
                           "📍 Lokasi Kejadian:\n$mapsLink\n\n"
                           "Mohon bantuan segera!";
 
-                        // 4. Panggil Fungsi Share
                         Share.share(message);
                       }, 
-                      icon: const Icon(Icons.share),
+                      // Icon Share Remix
+                      icon: const Icon(Remix.share_circle_line),
                       label: const Text("Bagikan Lokasi"),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Theme.of(context).primaryColor),
+                        foregroundColor: Theme.of(context).primaryColor,
                       ),
                     ),
                   )

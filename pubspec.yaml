@@ -45,6 +45,7 @@ dependencies:
   google_fonts: ^6.1.0
   remixicon: ^1.4.1
   image_picker: ^1.2.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

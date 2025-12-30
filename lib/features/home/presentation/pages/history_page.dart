@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:remixicon/remixicon.dart'; // <--- IMPORT REMIX ICON
+import 'package:remixicon/remixicon.dart';
 
-// Pastikan file ini ada (Halaman Detail Laporan yang menampilkan peta)
-import 'package:relawan_kita/features/home/presentation/pages/report_detail_pages.dart'; 
-// Jika file di atas belum ada/namanya beda, sesuaikan import-nya.
+// --- IMPORTS LOGIC ---
+import 'package:relawan_kita/core/services/api_service.dart';
+
+// --- IMPORTS MODEL ---
+// Pastikan path ini sesuai dengan file reports_model.dart kamu
+import 'package:relawan_kita/features/emergency/data/models/reports_model.dart';
+
+// --- IMPORT HALAMAN DETAIL ---
+// Pastikan path ini sesuai dengan file report_detail_pages.dart kamu
+import 'package:relawan_kita/features/home/presentation/pages/report_detail_pages.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
@@ -23,10 +30,10 @@ class HistoryPage extends StatelessWidget {
           backgroundColor: Colors.white,
           elevation: 0,
           bottom: TabBar(
-            labelColor: Theme.of(context).primaryColor, // Warna Biru Tema
+            labelColor: Theme.of(context).primaryColor,
             unselectedLabelColor: Colors.grey,
             indicatorColor: Theme.of(context).primaryColor,
-            labelStyle: Theme.of(context).textTheme.labelLarge, // Font Poppins Bold
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: "Laporan Pengaduan"),
               Tab(text: "Riwayat Donasi"),
@@ -35,8 +42,8 @@ class HistoryPage extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
-            _ReportHistoryList(),   // Isi Tab 1
-            _DonationHistoryList(), // Isi Tab 2
+            _ReportHistoryList(),   // Tab 1: DATA ASLI (API) + Pull to Refresh
+            _DonationHistoryList(), // Tab 2: DATA DUMMY
           ],
         ),
       ),
@@ -44,139 +51,210 @@ class HistoryPage extends StatelessWidget {
   }
 }
 
-// --- WIDGET TAB 1: RIWAYAT LAPORAN ---
-class _ReportHistoryList extends StatelessWidget {
+// ============================================================================
+// TAB 1: RIWAYAT LAPORAN (CONNECTED TO API + REFRESH INDICATOR)
+// ============================================================================
+class _ReportHistoryList extends StatefulWidget {
   const _ReportHistoryList();
 
   @override
-  Widget build(BuildContext context) {
-    // Simulasi Data Laporan
-    final List<Map<String, dynamic>> reports = [
-      {
-        "title": "Pohon Tumbang di Jl. Ahmad Yani",
-        "date": "24 Des 2024, 10:30",
-        "status": "Selesai",
-        "color": Colors.green,
-        "description": "Pohon besar tumbang menutupi badan jalan akibat angin kencang. Tim Damkar telah melakukan pembersihan lokasi."
-      },
-      {
-        "title": "Banjir Setinggi 50cm",
-        "date": "23 Des 2024, 08:15",
-        "status": "Diproses Relawan",
-        "color": Colors.blue,
-        "description": "Air sungai meluap masuk ke pemukiman warga RT 05. Warga membutuhkan bantuan logistik dan perahu karet."
-      },
-      {
-        "title": "Jalan Berlubang Parah",
-        "date": "20 Des 2024, 14:00",
-        "status": "Menunggu Verifikasi",
-        "color": Colors.orange,
-        "description": "Lubang jalan sedalam 20cm sangat membahayakan pengendara motor, terutama saat malam hari."
-      },
-    ];
+  State<_ReportHistoryList> createState() => _ReportHistoryListState();
+}
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: reports.length,
-      itemBuilder: (context, index) {
-        final item = reports[index];
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header (Tanggal & Status)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      item['date'], 
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: item['color'].withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        item['status'],
-                        style: TextStyle(
-                          color: item['color'], 
-                          fontSize: 10, 
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Poppins' // Paksa Poppins kalau Theme belum load sempurna
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 8),
-                
-                // Judul
-                Text(
-                  item['title'], 
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)
-                ),
-                const SizedBox(height: 8),
-                const Divider(),
-                
-                // TOMBOL LIHAT LOKASI (Updated)
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReportDetailPage(reportData: item),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      children: [
-                        // Icon Map Pin (Remix)
-                        Icon(Remix.map_pin_2_fill, size: 18, color: Theme.of(context).primaryColor),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Lihat Lokasi & Detail", 
-                          style: TextStyle(
-                            fontSize: 14, 
-                            color: Theme.of(context).primaryColor, 
-                            fontWeight: FontWeight.w600
-                          )
-                        ),
-                        const Spacer(),
-                        // Icon Arrow (Remix)
-                        const Icon(Remix.arrow_right_s_line, size: 16, color: Colors.grey),
-                      ],
-                    ),
-                  ),
-                )
-              ],
+class _ReportHistoryListState extends State<_ReportHistoryList> {
+  List<ReportModel> _reports = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchReports();
+  }
+
+  // UBAH: Menggunakan Future<void> agar RefreshIndicator bekerja
+  Future<void> _fetchReports() async {
+    final data = await ApiService().getMyReports();
+    if (mounted) {
+      setState(() {
+        _reports = data;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'verified': return Colors.green;
+      case 'rejected': return Colors.red;
+      default: return Colors.orange; // Pending
+    }
+  }
+
+  String _formatStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'verified': return "Terverifikasi";
+      case 'rejected': return "Ditolak";
+      default: return "Menunggu Verifikasi";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_reports.isEmpty) {
+      // FITUR REFRESH SAAT KOSONG
+      return RefreshIndicator(
+        onRefresh: _fetchReports,
+        child: ListView( 
+          physics: const AlwaysScrollableScrollPhysics(), // Wajib ada biar bisa ditarik
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.3), 
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Remix.file_list_3_line, size: 80, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text("Belum ada laporan", style: TextStyle(color: Colors.grey[600])),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      );
+    }
+
+    // FITUR REFRESH SAAT ADA DATA
+    return RefreshIndicator(
+      onRefresh: _fetchReports,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(), // Wajib ada
+        padding: const EdgeInsets.all(16),
+        itemCount: _reports.length,
+        itemBuilder: (context, index) {
+          final report = _reports[index];
+          final statusColor = _getStatusColor(report.status);
+
+          return Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header (Tanggal & Status)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        report.createdAt.length > 10 
+                            ? report.createdAt.substring(0, 10) 
+                            : report.createdAt, 
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _formatStatus(report.status),
+                          style: TextStyle(
+                            color: statusColor, 
+                            fontSize: 10, 
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Judul (Category) & Urgency
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          report.category, 
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      if (report.urgency == 'Tinggi')
+                        const Icon(Remix.alarm_warning_fill, color: Colors.red, size: 16)
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 4),
+                  // Deskripsi Singkat
+                  Text(
+                    report.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+
+                  const SizedBox(height: 8),
+                  const Divider(),
+                  
+                  // TOMBOL LIHAT LOKASI
+                  InkWell(
+                    onTap: () {
+                      // Navigasi ke Halaman Detail
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportDetailPage(reportData: report), 
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          Icon(Remix.map_pin_2_fill, size: 18, color: Theme.of(context).primaryColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Lihat Lokasi & Detail", 
+                            style: TextStyle(
+                              fontSize: 14, 
+                              color: Theme.of(context).primaryColor, 
+                              fontWeight: FontWeight.w600
+                            )
+                          ),
+                          const Spacer(),
+                          const Icon(Remix.arrow_right_s_line, size: 16, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-// --- WIDGET TAB 2: RIWAYAT DONASI ---
+// ============================================================================
+// TAB 2: RIWAYAT DONASI (MASIH DUMMY)
+// ============================================================================
 class _DonationHistoryList extends StatelessWidget {
   const _DonationHistoryList();
 
   @override
   Widget build(BuildContext context) {
-    // Simulasi Data Donasi
     final List<Map<String, dynamic>> donations = [
       {
         "campaign": "Banjir Bandang Demak",
@@ -211,7 +289,6 @@ class _DonationHistoryList extends StatelessWidget {
                   color: Colors.pink.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                // Icon Heart (Remix)
                 child: const Icon(Remix.heart_3_fill, color: Colors.pink, size: 24),
               ),
               const SizedBox(width: 16),

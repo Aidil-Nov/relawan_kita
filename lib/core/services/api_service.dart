@@ -3,11 +3,12 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:relawan_kita/features/donation/data/models/campaign_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:relawan_kita/features/profile/data/models/certificate_model.dart'; // Import model baru
 
 class ApiService {
   // Ganti IP ini sesuai perangkat Anda
   // Pastikan IP ini benar jika pakai HP fisik (bukan Emulator)
-  final String baseUrl = "http://192.168.1.45:8000/api";
+  final String baseUrl = "http://10.0.2.2:8000/api";
 
   Future<List<CampaignModel>> getCampaigns() async {
     try {
@@ -38,12 +39,16 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
-      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/reports'));
-      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/reports'),
+      );
+
       // 2. Kirim Header Token (PENTING!)
       request.headers.addAll({
         'Accept': 'application/json',
-        'Authorization': 'Bearer $token', // <--- Wajib ada biar gak 401 Unauthorized
+        'Authorization':
+            'Bearer $token', // <--- Wajib ada biar gak 401 Unauthorized
       });
 
       request.fields['category'] = category;
@@ -110,7 +115,13 @@ class ApiService {
   }
 
   // --- FUNGSI REGISTER ---
-  Future<bool> register(String name, String email, String password, String nik, String phone) async {
+  Future<bool> register(
+    String name,
+    String email,
+    String password,
+    String nik,
+    String phone,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
@@ -197,11 +208,7 @@ class ApiService {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: {
-          'name': name,
-          'phone': phone,
-          'nik': nik,
-        },
+        body: {'name': name, 'phone': phone, 'nik': nik},
       );
 
       if (response.statusCode == 200) {
@@ -219,7 +226,7 @@ class ApiService {
       return false;
     }
   }
-// ... fungsi lainnya ...
+  // ... fungsi lainnya ...
 
   // --- GANTI PASSWORD ---
   Future<bool> updatePassword(String currentPass, String newPass) async {
@@ -251,5 +258,30 @@ class ApiService {
       return false;
     }
   }
-  
+
+  Future<List<CertificateModel>> getCertificates() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/certificates'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+        final List<dynamic> data = body['data'];
+        return data.map((json) => CertificateModel.fromJson(json)).toList();
+      } else {
+        return []; // Return list kosong jika gagal
+      }
+    } catch (e) {
+      print("Error Get Certificates: $e");
+      return [];
+    }
+  }
 }

@@ -1,7 +1,9 @@
-import 'dart:io'; // Untuk File
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Pastikan plugin ini ada
+import 'package:image_picker/image_picker.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Wajib ada
+import 'package:relawan_kita/core/services/api_service.dart'; // Wajib ada
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -13,21 +15,38 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   
-  // Controller dengan data dummy awal
+  // Controller
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
+  late TextEditingController _nikController; 
 
-  File? _imageFile; // Menyimpan foto baru
+  File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: "Budi Santoso");
-    _phoneController = TextEditingController(text: "081234567890");
-    _emailController = TextEditingController(text: "budi.santoso@email.com");
+    // Inisialisasi controller
+    _nameController = TextEditingController();
+    _phoneController = TextEditingController();
+    _emailController = TextEditingController();
+    _nikController = TextEditingController();
+    
+    // Panggil fungsi untuk mengisi data saat ini
+    _loadCurrentData();
+  }
+
+  // --- LOGIC 1: AMBIL DATA LAMA DARI HP ---
+  void _loadCurrentData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _nameController.text = prefs.getString('user_name') ?? "";
+      _emailController.text = prefs.getString('user_email') ?? "";
+      _phoneController.text = prefs.getString('user_phone') ?? ""; 
+      _nikController.text = prefs.getString('user_nik') ?? ""; 
+    });
   }
 
   @override
@@ -35,10 +54,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _nikController.dispose();
     super.dispose();
   }
 
-  // Fungsi Ganti Foto
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -48,23 +67,46 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  // Fungsi Simpan Profil
+  // --- LOGIC 2: SIMPAN KE SERVER & HP ---
   void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      // Simulasi delay server
-      await Future.delayed(const Duration(seconds: 2));
+
+      // 1. Panggil API Update Profile ke Server Laravel
+      bool success = await ApiService().updateProfile(
+        _nameController.text,
+        _phoneController.text,
+        _nikController.text,
+      );
+
       setState(() => _isLoading = false);
 
       if (!mounted) return;
       
-      Navigator.pop(context); // Kembali ke menu profil
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Profil berhasil diperbarui!"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (success) {
+        // 2. Jika sukses, Update data di SharedPreferences (HP)
+        // Ini PENTING agar saat kembali ke halaman Profil, datanya langsung berubah
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_name', _nameController.text);
+        await prefs.setString('user_phone', _phoneController.text);
+        await prefs.setString('user_nik', _nikController.text);
+
+        Navigator.pop(context); // Kembali ke menu profil
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Profil berhasil diperbarui!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Gagal memperbarui profil. Cek koneksi atau NIK duplikat."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -95,7 +137,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           key: _formKey,
           child: Column(
             children: [
-              // FOTO PROFIL
+              // FOTO PROFIL (UI Saja, Backend foto menyusul)
               Center(
                 child: Stack(
                   children: [
@@ -105,7 +147,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.grey.shade200, width: 2),
                         image: DecorationImage(
-                          // Jika ada foto baru pakai FileImage, jika tidak pakai NetworkImage
                           image: _imageFile != null 
                             ? FileImage(_imageFile!) as ImageProvider
                             : const NetworkImage("https://i.pravatar.cc/300"), 
@@ -116,7 +157,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     Positioned(
                       bottom: 0, right: 0,
                       child: GestureDetector(
-                        onTap: _pickImage, // Klik untuk ganti foto
+                        onTap: _pickImage,
                         child: CircleAvatar(
                           radius: 16,
                           backgroundColor: Theme.of(context).primaryColor,
@@ -129,18 +170,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               const SizedBox(height: 30),
 
-              // Form NIK (Read Only)
+              // Form NIK (Bisa diedit agar User bisa melengkapi data)
               TextFormField(
-                initialValue: "6171032508900001",
-                readOnly: true,
-                style: const TextStyle(color: Colors.grey),
+                controller: _nikController, 
+                readOnly: false, 
+                style: const TextStyle(color: Colors.black87), 
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: "NIK (Tidak dapat diubah)",
+                  labelText: "NIK (KTP)",
                   prefixIcon: const Icon(Remix.shield_user_line),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: Colors.grey[50],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                // Validasi NIK 16 Digit (Opsional, bisa diaktifkan jika mau strict)
+                // validator: (val) => (val != null && val.length != 16) ? "NIK harus 16 digit" : null,
               ),
               const SizedBox(height: 16),
 
@@ -169,29 +213,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               const SizedBox(height: 16),
 
-              // Form Email
+              // Form Email (Read Only)
               TextFormField(
                 controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
+                readOnly: true, 
+                style: const TextStyle(color: Colors.grey),
                 decoration: InputDecoration(
-                  labelText: "Email",
+                  labelText: "Email (Tidak dapat diubah)",
                   prefixIcon: const Icon(Remix.mail_line),
+                  filled: true,
+                  fillColor: Colors.grey[100],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                validator: (val) => !val!.contains("@") ? "Email tidak valid" : null,
               ),
               
               const SizedBox(height: 40),
               
+              // Tombol Simpan Bawah
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: Theme.of(context).primaryColor,
                   ),
-                  child: const Text("SIMPAN PERUBAHAN", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: _isLoading 
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("SIMPAN PERUBAHAN", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               )
             ],

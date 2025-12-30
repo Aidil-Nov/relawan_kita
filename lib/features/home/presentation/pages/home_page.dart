@@ -12,6 +12,7 @@ import 'package:relawan_kita/features/emergency/presentation/pages/panic_button_
 import 'package:relawan_kita/features/donation/data/models/campaign_model.dart';
 import 'package:relawan_kita/core/services/api_service.dart';
 import 'package:relawan_kita/features/donation/presentation/pages/donation_detail_page.dart';
+import 'package:relawan_kita/features/profile/presentation/pages/profile_page.dart';
 import 'transparency_detail_page.dart'; // Pastikan path ini benar
 
 class HomePage extends StatefulWidget {

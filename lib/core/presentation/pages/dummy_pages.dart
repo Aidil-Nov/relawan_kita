@@ -4,10 +4,7 @@ import 'package:remixicon/remixicon.dart';
 // --- IMPORTS UNTUK NAVIGASI ---
 // Pastikan path ini sesuai dengan struktur folder Anda
 import 'package:relawan_kita/features/donation/presentation/pages/donation_detail_page.dart';
-import 'package:relawan_kita/features/auth/presentation/pages/edit_profile_page.dart'; // File yg Anda upload
-import 'package:relawan_kita/features/auth/presentation/pages/certificate_page.dart'; // File yg Anda upload
-import 'package:relawan_kita/features/home/presentation/pages/settings_page.dart'; // Kita buat di bawah
-import 'package:relawan_kita/features/home/presentation/pages/help_page.dart'; // Kita buat di bawah
+
 
 // ============================================================================
 // 1. DONATION PAGE (Halaman List Donasi)
@@ -205,149 +202,149 @@ class DonationPage extends StatelessWidget {
 // ============================================================================
 // 2. PROFILE PAGE (Halaman Profil Pengguna)
 // ============================================================================
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+// class ProfilePage extends StatelessWidget {
+//   const ProfilePage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Profil Saya"),
-        centerTitle: false,
-        automaticallyImplyLeading: false, // Hilangkan tombol back di tab menu
-        actions: [
-          // ... di dalam ProfilePage ...
-          IconButton(
-            icon: const Icon(Remix.logout_box_r_line, color: Colors.red),
-            onPressed: () {
-              // TAMPILKAN DIALOG KONFIRMASI
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Konfirmasi Keluar"),
-                  content: const Text(
-                    "Apakah Anda yakin ingin keluar dari akun ini?",
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context), // Batal
-                      child: const Text("Batal"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Tutup dialog
-                        Navigator.pushReplacementNamed(
-                          context,
-                          '/login',
-                        ); // Pindah ke Login
-                      },
-                      child: const Text(
-                        "Ya, Keluar",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          // ...
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // HEADER PROFIL
-            const Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.blueAccent,
-                child: Icon(
-                  Remix.user_smile_line,
-                  size: 50,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Budi Santoso",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const Text(
-              "Relawan Siaga - Pontianak",
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 30),
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Colors.white,
+//       appBar: AppBar(
+//         title: const Text("Profil Saya"),
+//         centerTitle: false,
+//         automaticallyImplyLeading: false, // Hilangkan tombol back di tab menu
+//         actions: [
+//           // ... di dalam ProfilePage ...
+//           IconButton(
+//             icon: const Icon(Remix.logout_box_r_line, color: Colors.red),
+//             onPressed: () {
+//               // TAMPILKAN DIALOG KONFIRMASI
+//               showDialog(
+//                 context: context,
+//                 builder: (context) => AlertDialog(
+//                   title: const Text("Konfirmasi Keluar"),
+//                   content: const Text(
+//                     "Apakah Anda yakin ingin keluar dari akun ini?",
+//                   ),
+//                   actions: [
+//                     TextButton(
+//                       onPressed: () => Navigator.pop(context), // Batal
+//                       child: const Text("Batal"),
+//                     ),
+//                     TextButton(
+//                       onPressed: () {
+//                         Navigator.pop(context); // Tutup dialog
+//                         Navigator.pushReplacementNamed(
+//                           context,
+//                           '/login',
+//                         ); // Pindah ke Login
+//                       },
+//                       child: const Text(
+//                         "Ya, Keluar",
+//                         style: TextStyle(color: Colors.red),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               );
+//             },
+//           ),
+//           // ...
+//         ],
+//       ),
+//       body: SingleChildScrollView(
+//         padding: const EdgeInsets.all(20),
+//         child: Column(
+//           children: [
+//             // HEADER PROFIL
+//             const Center(
+//               child: CircleAvatar(
+//                 radius: 50,
+//                 backgroundColor: Colors.blueAccent,
+//                 child: Icon(
+//                   Remix.user_smile_line,
+//                   size: 50,
+//                   color: Colors.white,
+//                 ),
+//               ),
+//             ),
+//             const SizedBox(height: 16),
+//             const Text(
+//               "Budi Santoso",
+//               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//             ),
+//             const Text(
+//               "Relawan Siaga - Pontianak",
+//               style: TextStyle(color: Colors.grey),
+//             ),
+//             const SizedBox(height: 30),
 
-            // MENU OPTIONS
-            _buildProfileMenu(
-              context,
-              icon: Remix.user_settings_line,
-              text: "Edit Profil",
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const EditProfilePage(),
-                ),
-              ),
-            ),
-            _buildProfileMenu(
-              context,
-              icon: Remix.medal_line,
-              text: "Sertifikat Kompetensi",
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CertificatePage(),
-                ),
-              ),
-            ),
-            _buildProfileMenu(
-              context,
-              icon: Remix.settings_3_line,
-              text: "Pengaturan",
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              ),
-            ),
-            _buildProfileMenu(
-              context,
-              icon: Remix.question_line,
-              text: "Pusat Bantuan",
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HelpPage()),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+//             // MENU OPTIONS
+//             _buildProfileMenu(
+//               context,
+//               icon: Remix.user_settings_line,
+//               text: "Edit Profil",
+//               onTap: () => Navigator.push(
+//                 context,
+//                 MaterialPageRoute(
+//                   builder: (context) => const EditProfilePage(),
+//                 ),
+//               ),
+//             ),
+//             _buildProfileMenu(
+//               context,
+//               icon: Remix.medal_line,
+//               text: "Sertifikat Kompetensi",
+//               onTap: () => Navigator.push(
+//                 context,
+//                 MaterialPageRoute(
+//                   builder: (context) => const CertificatePage(),
+//                 ),
+//               ),
+//             ),
+//             _buildProfileMenu(
+//               context,
+//               icon: Remix.settings_3_line,
+//               text: "Pengaturan",
+//               onTap: () => Navigator.push(
+//                 context,
+//                 MaterialPageRoute(builder: (context) => const SettingsPage()),
+//               ),
+//             ),
+//             _buildProfileMenu(
+//               context,
+//               icon: Remix.question_line,
+//               text: "Pusat Bantuan",
+//               onTap: () => Navigator.push(
+//                 context,
+//                 MaterialPageRoute(builder: (context) => const HelpPage()),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
 
-  Widget _buildProfileMenu(
-    BuildContext context, {
-    required IconData icon,
-    required String text,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.black87),
-      ),
-      title: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
-      trailing: const Icon(Remix.arrow_right_s_line, color: Colors.grey),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(vertical: 4),
-    );
-  }
-}
+//   Widget _buildProfileMenu(
+//     BuildContext context, {
+//     required IconData icon,
+//     required String text,
+//     required VoidCallback onTap,
+//   }) {
+//     return ListTile(
+//       leading: Container(
+//         padding: const EdgeInsets.all(10),
+//         decoration: BoxDecoration(
+//           color: Colors.grey[100],
+//           shape: BoxShape.circle,
+//         ),
+//         child: Icon(icon, color: Colors.black87),
+//       ),
+//       title: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+//       trailing: const Icon(Remix.arrow_right_s_line, color: Colors.grey),
+//       onTap: onTap,
+//       contentPadding: const EdgeInsets.symmetric(vertical: 4),
+//     );
+//   }
+// }

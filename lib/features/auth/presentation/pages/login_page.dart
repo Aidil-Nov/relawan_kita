@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+// --- IMPORTS PENTING ---
+import 'package:relawan_kita/core/services/api_service.dart';
+import 'package:relawan_kita/features/home/presentation/pages/home_page.dart';
+import 'package:relawan_kita/features/auth/presentation/pages/register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,18 +14,45 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+  
+  // Controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
+  // State
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
+  // --- LOGIKA LOGIN (UPDATE API) ---
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      if (!mounted) return;
+
+      // 1. Panggil API Login
+      bool success = await ApiService().login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
       setState(() => _isLoading = false);
-      Navigator.pushReplacementNamed(context, '/home');
+
+      if (success) {
+        if (!mounted) return;
+        // 2. Jika Sukses -> Pindah ke Home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        if (!mounted) return;
+        // 3. Jika Gagal -> Tampilkan Error
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Login Gagal! Cek email dan password Anda."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -38,6 +69,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // --- LOGO ---
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -47,14 +79,17 @@ class _LoginPageState extends State<LoginPage> {
                     child: Icon(Remix.hand_heart_fill, size: 60, color: Theme.of(context).primaryColor),
                   ),
                   const SizedBox(height: 24),
+                  
+                  // --- JUDUL ---
                   Text("Selamat Datang", style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 8),
                   Text("Masuk untuk melanjutkan aktivitas relawan.", style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 40),
 
-                  // EMAIL
+                  // --- INPUT EMAIL ---
                   TextFormField(
                     controller: _emailController,
+                    keyboardType: TextInputType.emailAddress, // Tambahan: Keyboard Email
                     decoration: InputDecoration(
                       labelText: "Email",
                       prefixIcon: const Icon(Remix.mail_line),
@@ -64,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // PASSWORD
+                  // --- INPUT PASSWORD ---
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
@@ -80,20 +115,28 @@ class _LoginPageState extends State<LoginPage> {
                     validator: (val) => val!.isEmpty ? "Password wajib diisi" : null,
                   ),
 
+                  // --- LUPA PASSWORD (DUMMY) ---
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                      onPressed: () {
+                         // Nanti bisa diarahkan ke halaman Forgot Password jika sudah ada
+                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Fitur Lupa Password belum tersedia.")));
+                      },
                       child: const Text("Lupa Password?"),
                     ),
                   ),
                   const SizedBox(height: 24),
 
+                  // --- TOMBOL MASUK ---
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // Styling tombol
+                      ),
                       child: _isLoading 
                         ? const CircularProgressIndicator(color: Colors.white) 
                         : const Text("MASUK", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -101,8 +144,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // --- LINK DAFTAR ---
                   GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/register'),
+                    onTap: () {
+                      // Arahkan ke Halaman Register yang sudah kita update tadi
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (context) => const RegisterPage())
+                      );
+                    },
                     child: RichText(
                       text: TextSpan(
                         text: "Belum punya akun? ",

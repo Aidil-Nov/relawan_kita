@@ -1,60 +1,41 @@
-enum UserRole { citizen, volunteer, donor, adminGov }
-enum DisabilityType { none, deaf, blind, mobility }
+class ReportModel {
+  final int id;
+  final String ticketId;
+  final String category;
+  final String urgency;
+  final String description;
+  final String locationAddress;
+  final String photoUrl;
+  final String status;
+  final String createdAt;
+  final String? adminNote;
 
-class UserModel {
-  final String userId;
-  final String fullName;
-  final String email;
-  final String phoneNumber;
-  final String nik; // Enkripsi di backend/database, di sini string biasa
-  final UserRole role;
-  final bool isVerified;
-  final DisabilityType disabilityType;
-  final DateTime createdAt;
-
-  UserModel({
-    required this.userId,
-    required this.fullName,
-    required this.email,
-    required this.phoneNumber,
-    this.nik = '',
-    this.role = UserRole.citizen,
-    this.isVerified = false,
-    this.disabilityType = DisabilityType.none,
+  ReportModel({
+    required this.id,
+    required this.ticketId,
+    required this.category,
+    required this.urgency,
+    required this.description,
+    required this.locationAddress,
+    required this.photoUrl,
+    required this.status,
     required this.createdAt,
+    this.adminNote,
   });
 
-  // Mengubah data dari Map (Database/JSON) ke Object Dart
-  factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      userId: map['user_id'] ?? '',
-      fullName: map['full_name'] ?? '',
-      email: map['email'] ?? '',
-      phoneNumber: map['phone_number'] ?? '',
-      nik: map['nik'] ?? '',
-      role: UserRole.values.firstWhere(
-          (e) => e.toString() == 'UserRole.${map['role']}',
-          orElse: () => UserRole.citizen),
-      isVerified: map['is_verified'] ?? false,
-      disabilityType: DisabilityType.values.firstWhere(
-          (e) => e.toString() == 'DisabilityType.${map['disability_type']}',
-          orElse: () => DisabilityType.none),
-      createdAt: DateTime.parse(map['created_at']),
+  factory ReportModel.fromJson(Map<String, dynamic> json) {
+    return ReportModel(
+      id: json['id'],
+      ticketId: json['ticket_id'],
+      category: json['category'],
+      urgency: json['urgency'],
+      description: json['description'],
+      locationAddress: json['location_address'],
+      // Pastikan URL gambar valid
+      photoUrl: json['photo_url'] ?? '', 
+      status: json['status'],
+      createdAt: json['created_at'],
+      adminNote: json['admin_note'],
     );
-  }
-
-  // Mengubah Object Dart ke Map (untuk dikirim ke Database)
-  Map<String, dynamic> toMap() {
-    return {
-      'user_id': userId,
-      'full_name': fullName,
-      'email': email,
-      'phone_number': phoneNumber,
-      'nik': nik,
-      'role': role.toString().split('.').last, // Simpan sebagai string 'citizen'
-      'is_verified': isVerified,
-      'disability_type': disabilityType.toString().split('.').last,
-      'created_at': createdAt.toIso8601String(),
-    };
   }
 }

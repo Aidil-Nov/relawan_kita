@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:remixicon/remixicon.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Wajib ada
-import 'package:relawan_kita/core/services/api_service.dart'; // Wajib ada
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:relawan_kita/core/services/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -15,30 +15,28 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   
-  // Controller
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _nikController; 
 
-  File? _imageFile;
+  File? _imageFile; // Foto Baru (Lokal)
+  String? _currentPhotoUrl; // Foto Lama (Server)
+  
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi controller
     _nameController = TextEditingController();
     _phoneController = TextEditingController();
     _emailController = TextEditingController();
     _nikController = TextEditingController();
     
-    // Panggil fungsi untuk mengisi data saat ini
     _loadCurrentData();
   }
 
-  // --- LOGIC 1: AMBIL DATA LAMA DARI HP ---
   void _loadCurrentData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -46,6 +44,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _emailController.text = prefs.getString('user_email') ?? "";
       _phoneController.text = prefs.getString('user_phone') ?? ""; 
       _nikController.text = prefs.getString('user_nik') ?? ""; 
+      
+      // Ambil URL foto lama
+      _currentPhotoUrl = prefs.getString('user_photo');
     });
   }
 
@@ -59,24 +60,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70, // Kompres sedikit biar cepat upload
+      );
+      
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint("Gagal ambil gambar: $e");
     }
   }
 
-  // --- LOGIC 2: SIMPAN KE SERVER & HP ---
   void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // 1. Panggil API Update Profile ke Server Laravel
+      // Panggil API (Kirim File Gambar jika ada)
       bool success = await ApiService().updateProfile(
-        _nameController.text,
-        _phoneController.text,
-        _nikController.text,
+        name: _nameController.text,
+        phone: _phoneController.text,
+        nik: _nikController.text,
+        imageFile: _imageFile, // Kirim file gambar (bisa null)
       );
 
       setState(() => _isLoading = false);
@@ -84,14 +93,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (!mounted) return;
       
       if (success) {
-        // 2. Jika sukses, Update data di SharedPreferences (HP)
-        // Ini PENTING agar saat kembali ke halaman Profil, datanya langsung berubah
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_name', _nameController.text);
-        await prefs.setString('user_phone', _phoneController.text);
-        await prefs.setString('user_nik', _nikController.text);
-
-        Navigator.pop(context); // Kembali ke menu profil
+        // Kembali ke halaman sebelumnya dengan pesan sukses
+        Navigator.pop(context, true); 
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -102,7 +105,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Gagal memperbarui profil. Cek koneksi atau NIK duplikat."),
+            content: Text("Gagal update. Cek koneksi internet."),
             backgroundColor: Colors.red,
           ),
         );
@@ -112,6 +115,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // LOGIKA TAMPILAN GAMBAR
+    ImageProvider imageProvider;
+    
+    if (_imageFile != null) {
+      // 1. Prioritas: Gambar yang baru diambil dari galeri
+      imageProvider = FileImage(_imageFile!);
+    } else if (_currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty && _currentPhotoUrl != "null") {
+      // 2. Prioritas: Gambar dari Server (URL)
+      imageProvider = NetworkImage(_currentPhotoUrl!);
+    } else {
+      // 3. Default: Placeholder
+      imageProvider = const NetworkImage("https://i.pravatar.cc/300");
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -137,7 +154,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           key: _formKey,
           child: Column(
             children: [
-              // FOTO PROFIL (UI Saja, Backend foto menyusul)
+              // FOTO PROFIL
               Center(
                 child: Stack(
                   children: [
@@ -147,10 +164,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.grey.shade200, width: 2),
                         image: DecorationImage(
-                          image: _imageFile != null 
-                            ? FileImage(_imageFile!) as ImageProvider
-                            : const NetworkImage("https://i.pravatar.cc/300"), 
+                          image: imageProvider,
                           fit: BoxFit.cover,
+                          // Handle jika URL error/expired
+                          onError: (exception, stackTrace) {
+                             debugPrint("Error loading image: $exception");
+                          }
                         ),
                       ),
                     ),
@@ -170,11 +189,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               const SizedBox(height: 30),
 
-              // Form NIK (Bisa diedit agar User bisa melengkapi data)
+              // Form NIK
               TextFormField(
                 controller: _nikController, 
-                readOnly: false, 
-                style: const TextStyle(color: Colors.black87), 
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: "NIK (KTP)",
@@ -183,8 +200,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                // Validasi NIK 16 Digit (Opsional, bisa diaktifkan jika mau strict)
-                // validator: (val) => (val != null && val.length != 16) ? "NIK harus 16 digit" : null,
               ),
               const SizedBox(height: 16),
 

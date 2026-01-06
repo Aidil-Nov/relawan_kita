@@ -5,9 +5,9 @@ import 'package:remixicon/remixicon.dart';
 import 'package:relawan_kita/core/services/api_service.dart';
 import 'package:relawan_kita/features/auth/presentation/pages/login_page.dart';
 
-// --- IMPORTS HALAMAN ANDA ---
-import 'package:relawan_kita/features/auth/presentation/pages/edit_profile_page.dart';
-import 'package:relawan_kita/features/auth/presentation/pages/certificate_page.dart';
+// --- IMPORTS HALAMAN LAIN ---
+import 'package:relawan_kita/features/profile/presentation/pages/edit_profile_page.dart'; 
+import 'package:relawan_kita/features/profile/presentation/pages/certificate_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/settings_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/help_page.dart';
 
@@ -19,69 +19,69 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // 1. STATE VARIABLES (UPDATE: TAMBAH NIK & PHONE)
+  // STATE VARIABLES
   String _name = "Loading...";
   String _email = "Loading...";
   String _phone = "";
   String _nik = "";
+  String? _photoUrl; 
+  bool _isGuest = true; // Default tamu
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _checkStatus();
   }
 
-  // 2. LOGIC AMBIL DATA (UPDATE)
+  // LOGIC CEK STATUS LOGIN
+  void _checkStatus() async {
+    bool login = await ApiService().isLoggedIn();
+    if (mounted) {
+      setState(() => _isGuest = !login); 
+    }
+    if (!_isGuest) {
+        _loadUserData(); 
+    }
+  }
+
   void _loadUserData() async {
     final userData = await ApiService().getUserData();
     if (mounted) {
       setState(() {
         _name = userData['name'];
         _email = userData['email'];
-        _phone = userData['phone']; // Ambil HP
-        _nik = userData['nik']; // Ambil NIK
+        _phone = userData['phone']; 
+        _nik = userData['nik']; 
+        _photoUrl = userData['photo_url']; 
       });
     }
   }
 
-  // 3. LOGIC LOGOUT (FIXED)
   void _handleLogout() {
     showDialog(
-      context: context, // 'context' ini milik ProfilePage (Parent)
+      context: context, 
       builder: (dialogContext) {
-        // <--- GANTI NAMA JADI dialogContext
         return AlertDialog(
           title: const Text("Konfirmasi Keluar"),
           content: const Text("Apakah Anda yakin ingin keluar dari akun ini?"),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(dialogContext), // Tutup pakai dialogContext
+              onPressed: () => Navigator.pop(dialogContext), 
               child: const Text("Batal"),
             ),
             TextButton(
               onPressed: () async {
-                // 1. Tutup Dialog dulu menggunakan dialogContext
                 Navigator.pop(dialogContext);
-
-                // 2. Proses Logout (Hapus Token & Request Server)
                 await ApiService().logout();
 
-                // 3. Cek apakah ProfilePage masih aktif
                 if (!mounted) return;
-
-                // 4. Navigasi ke Login menggunakan 'context' milik ProfilePage
-                // (JANGAN pakai dialogContext di sini karena dialognya sudah mati)
                 Navigator.pushAndRemoveUntil(
-                  context, // <--- INI KUNCINYA (Pakai context Parent)
+                  context, 
                   MaterialPageRoute(builder: (context) => const LoginPage()),
                   (route) => false,
                 );
               },
-              child: const Text(
-                "Ya, Keluar",
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text("Ya, Keluar", style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -91,6 +91,60 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // [TAMPILAN KHUSUS TAMU]
+    if (_isGuest) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Remix.lock_2_line, size: 80, color: Colors.grey[300]),
+                const SizedBox(height: 16),
+                const Text(
+                  "Akses Terbatas",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Silakan login untuk melihat profil, sertifikat, dan pengaturan akun Anda.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                          (route) => false,
+                        );
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                    ),
+                    child: const Text("LOGIN SEKARANG", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // [TAMPILAN USER LOGIN]
+    ImageProvider? avatarImage;
+    if (_photoUrl != null && _photoUrl!.isNotEmpty && _photoUrl != "null") {
+      avatarImage = NetworkImage(_photoUrl!);
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -110,32 +164,37 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // --- HEADER PROFIL ---
-            const Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.blueAccent,
-                child: Icon(
-                  Remix.user_smile_line,
-                  size: 50,
-                  color: Colors.white,
+            Center(
+              child: Container(
+                width: 100, 
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blueAccent,
+                  border: Border.all(color: Colors.grey.shade200, width: 2),
+                  image: avatarImage != null 
+                      ? DecorationImage(
+                          image: avatarImage,
+                          fit: BoxFit.cover,
+                          onError: (e, s) => debugPrint("Error load avatar: $e"),
+                        ) 
+                      : null,
                 ),
+                child: avatarImage == null 
+                    ? const Icon(Remix.user_smile_line, size: 50, color: Colors.white)
+                    : null,
               ),
             ),
             const SizedBox(height: 16),
 
-            // NAMA
             Text(
               _name,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-
-            // EMAIL
             Text(_email, style: const TextStyle(color: Colors.grey)),
 
             const SizedBox(height: 16),
 
-            // --- INFO TAMBAHAN (UPDATE: TAMPILKAN NIK & HP) ---
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -157,9 +216,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 30),
 
-            // --- MENU OPTIONS ---
-
-            // 1. Edit Profil
             _buildProfileMenu(
               context,
               icon: Remix.user_settings_line,
@@ -167,54 +223,37 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const EditProfilePage(),
-                  ),
-                ).then((_) {
-                  // Reload data saat kembali dari Edit Profil
-                  _loadUserData();
+                  MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                ).then((res) {
+                  if (res == true) _loadUserData(); else _loadUserData();
                 });
               },
             ),
 
-            // 2. Sertifikat
             _buildProfileMenu(
               context,
               icon: Remix.medal_line,
               text: "Sertifikat Kompetensi",
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CertificatePage(),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const CertificatePage()));
               },
             ),
 
-            // 3. Pengaturan
             _buildProfileMenu(
               context,
               icon: Remix.settings_3_line,
               text: "Pengaturan",
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
               },
             ),
 
-            // 4. Pusat Bantuan
             _buildProfileMenu(
               context,
               icon: Remix.question_line,
               text: "Pusat Bantuan",
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HelpPage()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpPage()));
               },
             ),
           ],
@@ -223,36 +262,21 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget kecil untuk baris info NIK & HP
   Widget _infoRow(IconData icon, String text) {
     return Row(
       children: [
         Icon(icon, size: 18, color: Colors.blue),
         const SizedBox(width: 10),
-        Text(
-          text,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          ),
-        ),
+        Text(text, style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.black87)),
       ],
     );
   }
 
-  Widget _buildProfileMenu(
-    BuildContext context, {
-    required IconData icon,
-    required String text,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildProfileMenu(BuildContext context, {required IconData icon, required String text, required VoidCallback onTap}) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
         child: Icon(icon, color: Colors.black87),
       ),
       title: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),

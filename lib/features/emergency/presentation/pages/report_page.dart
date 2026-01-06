@@ -1,13 +1,14 @@
 import 'dart:io'; // PENTING: Untuk akses File foto
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // PENTING: Plugin Kamera
 import 'package:remixicon/remixicon.dart';
 import 'package:relawan_kita/core/services/api_service.dart';
+import 'package:geolocator/geolocator.dart'; // Untuk Koordinat
+import 'package:geocoding/geocoding.dart'; // Untuk Alamat Jalan
+import 'package:relawan_kita/features/auth/presentation/pages/login_page.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
-
   @override
   State<ReportPage> createState() => _ReportPageState();
 }
@@ -134,42 +135,121 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  // --- SIMULASI GPS ---
+  // --- FUNGSI GPS ASLI (REAL-TIME) ---
   void _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() {
-      _isGettingLocation = false;
-      _locationController.text = "Jl. Jend. Sudirman No. 45 (GPS Akurat)";
-    });
+
+    try {
+      // 1. Cek apakah GPS di HP nyala?
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw 'Layanan lokasi (GPS) mati. Mohon nyalakan.';
+      }
+
+      // 2. Cek Izin Aplikasi
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Izin lokasi ditolak.';
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw 'Izin lokasi ditolak permanen. Buka pengaturan HP.';
+      }
+
+      // 3. Ambil Titik Koordinat (Latitude & Longitude)
+      // Menggunakan High Accuracy agar pas di titik berdiri
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // 4. Ubah Koordinat jadi Alamat (Reverse Geocoding)
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      // Susun alamat agar rapi
+      String fullAddress = "Lokasi tidak dikenali";
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        // Format: Jl. Nama Jalan, Kecamatan, Kota
+        fullAddress =
+            "${place.street}, ${place.subLocality}, ${place.locality}";
+      }
+
+      // 5. Update UI
+      if (!mounted) return;
+      setState(() {
+        _isGettingLocation = false;
+        // Tampilkan Alamat di Textfield
+        _locationController.text = fullAddress;
+
+        // Simpan Koordinat di variabel (Opsional: Jika nanti mau dikirim ke Database)
+        // _latitude = position.latitude;
+        // _longitude = position.longitude;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isGettingLocation = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal GPS: $e"), backgroundColor: Colors.red),
+      );
+    }
   }
 
-  // --- LOGIKA KIRIM LAPORAN (REAL API) ---
+  // GANTI FUNGSI _submitReport DENGAN INI:
   void _submitReport() async {
+    // 1. CEK LOGIN
+    bool isLogin = await ApiService().isLoggedIn();
+    if (!isLogin) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Login Diperlukan"),
+          content: const Text(
+            "Anda harus login untuk mengirim laporan bencana.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Batal"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const LoginPage()),
+                );
+              },
+              child: const Text("Login"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // 2. LOGIKA SUBMIT SEBELUMNYA
     if (_formKey.currentState!.validate()) {
-      // Validasi Kategori
       if (_selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Pilih kategori bencana.")),
         );
         return;
       }
-
-      // Validasi File Foto
       if (_imageFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Wajib lampirkan foto bukti.")),
         );
         return;
       }
-
       setState(() => _isLoading = true);
-
-      // --- PANGGIL API ---
       bool isSuccess = await ApiService().submitReport(
         category: _selectedCategory!,
-        // Ubah index urgensi (0,1,2) jadi string (Rendah, Sedang, Tinggi)
         urgency: _selectedUrgency == 0
             ? 'Rendah'
             : (_selectedUrgency == 1 ? 'Sedang' : 'Tinggi'),
@@ -177,21 +257,14 @@ class _ReportPageState extends State<ReportPage> {
         description: _descController.text,
         imageFile: _imageFile!,
       );
-
       setState(() => _isLoading = false);
-
       if (!mounted) return;
-
       if (isSuccess) {
-        // Jika Sukses, Tampilkan Dialog
-        // Generate Ticket ID Dummy saja untuk tampilan (karena aslinya dari server)
-        String ticketId = "SENT-OK";
-        _showSuccessDialog(ticketId);
+        _showSuccessDialog("SENT-OK");
       } else {
-        // Jika Gagal
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Gagal mengirim laporan. Cek koneksi server."),
+            content: Text("Gagal mengirim laporan."),
             backgroundColor: Colors.red,
           ),
         );

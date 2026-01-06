@@ -3,23 +3,20 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// --- IMPORT MODELS (SESUAIKAN JIKA NAMA FOLDER BEDA) ---
+// --- IMPORT MODELS ---
 import 'package:relawan_kita/features/donation/data/models/campaign_model.dart';
-// Perhatikan: reports_model.dart (pakai s)
 import 'package:relawan_kita/features/emergency/data/models/reports_model.dart';
 import 'package:relawan_kita/features/profile/data/models/certificate_model.dart';
+import 'package:relawan_kita/features/donation/data/models/donation_history_model.dart';
 
 class ApiService {
   // GANTI IP SESUAI KEBUTUHAN:
-  // Emulator: "http://10.0.2.2:8000/api"
-  // HP Fisik: "http://192.168.1.XX:8000/api" (Cek ipconfig)
   final String baseUrl = "http://10.0.2.2:8000/api";
 
   // ===========================================================================
   // 1. AUTHENTICATION (Login, Register, Logout)
   // ===========================================================================
 
-  // --- LOGIN ---
   Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -33,16 +30,7 @@ class ApiService {
         String token = data['data']['token'];
         Map<String, dynamic> user = data['data']['user'];
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('user_name', user['name']);
-        await prefs.setString('user_email', user['email']);
-        await prefs.setInt('user_id', user['id']);
-        
-        // Simpan NIK & Phone
-        await prefs.setString('user_nik', user['nik'] ?? '-');
-        await prefs.setString('user_phone', user['phone'] ?? '-');
-
+        await _saveLocalUser(token, user); // Helper Simpan Data
         return true;
       } else {
         print("Login Gagal: ${response.body}");
@@ -54,8 +42,13 @@ class ApiService {
     }
   }
 
-  // --- REGISTER ---
-  Future<bool> register(String name, String email, String password, String nik, String phone) async {
+  Future<bool> register(
+    String name,
+    String email,
+    String password,
+    String nik,
+    String phone,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
@@ -74,15 +67,7 @@ class ApiService {
         String token = data['data']['token'];
         Map<String, dynamic> user = data['data']['user'];
 
-        // Auto Login setelah Register
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('user_name', user['name']);
-        await prefs.setString('user_email', user['email']);
-        await prefs.setInt('user_id', user['id']);
-        await prefs.setString('user_nik', user['nik'] ?? '-');
-        await prefs.setString('user_phone', user['phone'] ?? '-');
-
+        await _saveLocalUser(token, user); // Auto Login
         return true;
       } else {
         print("Register Gagal: ${response.body}");
@@ -94,7 +79,6 @@ class ApiService {
     }
   }
 
-  // --- LOGOUT ---
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -115,14 +99,30 @@ class ApiService {
     await prefs.clear();
   }
 
-  // Cek Status Login
+  // Cek apakah user login (Punya token)
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey('token');
+    return prefs.containsKey('token'); // True jika user, False jika tamu
+  }
+
+  // Helper Private untuk simpan data user (biar rapi)
+  Future<void> _saveLocalUser(String token, Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    await prefs.setString('user_name', user['name']);
+    await prefs.setString('user_email', user['email']);
+    await prefs.setInt('user_id', user['id']);
+    await prefs.setString('user_nik', user['nik'] ?? '-');
+    await prefs.setString('user_phone', user['phone'] ?? '-');
+
+    // Simpan foto saat login/register juga
+    if (user['photo_url'] != null) {
+      await prefs.setString('user_photo', user['photo_url']);
+    }
   }
 
   // ===========================================================================
-  // 2. USER PROFILE
+  // 2. USER PROFILE (DIPERBAIKI UNTUK FOTO)
   // ===========================================================================
 
   Future<Map<String, dynamic>> getUserData() async {
@@ -132,29 +132,66 @@ class ApiService {
       'email': prefs.getString('user_email') ?? '-',
       'nik': prefs.getString('user_nik') ?? '-',
       'phone': prefs.getString('user_phone') ?? '-',
+      // Ambil URL foto dari penyimpanan lokal
+      'photo_url': prefs.getString('user_photo') ?? '',
     };
   }
 
-  Future<bool> updateProfile(String name, String phone, String nik) async {
+  // [PERBAIKAN UTAMA DISINI: MULTIPART REQUEST]
+  Future<bool> updateProfile({
+    required String name,
+    required String phone,
+    required String nik,
+    File? imageFile, // Tambahan parameter file (Opsional)
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
-      final response = await http.post(
+      // Gunakan MultipartRequest agar bisa kirim File + Teks
+      var request = http.MultipartRequest(
+        'POST',
         Uri.parse('$baseUrl/update-profile'),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: {'name': name, 'phone': phone, 'nik': nik},
       );
 
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      // Data Teks
+      request.fields['name'] = name;
+      request.fields['phone'] = phone;
+      request.fields['nik'] = nik;
+
+      // Data File (Jika user mengganti foto)
+      if (imageFile != null) {
+        var pic = await http.MultipartFile.fromPath('photo', imageFile.path);
+        request.files.add(pic);
+      }
+
+      // Kirim Request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
       if (response.statusCode == 200) {
-        await prefs.setString('user_name', name);
-        await prefs.setString('user_phone', phone);
-        await prefs.setString('user_nik', nik);
+        // Ambil data user terbaru dari respon server
+        final data = jsonDecode(response.body);
+        Map<String, dynamic> updatedUser = data['data']['user'];
+
+        // Update data di HP agar sinkron
+        await prefs.setString('user_name', updatedUser['name']);
+        await prefs.setString('user_phone', updatedUser['phone'] ?? '');
+        await prefs.setString('user_nik', updatedUser['nik'] ?? '');
+
+        // Simpan URL Foto Baru (PENTING)
+        if (updatedUser['photo_url'] != null) {
+          await prefs.setString('user_photo', updatedUser['photo_url']);
+        }
+
         return true;
       } else {
+        print("Gagal Update: ${response.body}");
         return false;
       }
     } catch (e) {
@@ -194,14 +231,12 @@ class ApiService {
   Future<List<CampaignModel>> getCampaigns() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/campaigns'));
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = jsonDecode(response.body);
         final List<dynamic> data = body['data'];
         return data.map((json) => CampaignModel.fromJson(json)).toList();
-      } else {
-        return [];
       }
+      return [];
     } catch (e) {
       print("Error Get Campaigns: $e");
       return [];
@@ -212,7 +247,6 @@ class ApiService {
   // 4. REPORTS (LAPORAN BENCANA)
   // ===========================================================================
 
-  // Kirim Laporan
   Future<bool> submitReport({
     required String category,
     required String urgency,
@@ -224,8 +258,11 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
-      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/reports'));
-      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/reports'),
+      );
+
       request.headers.addAll({
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
@@ -235,6 +272,8 @@ class ApiService {
       request.fields['urgency'] = urgency;
       request.fields['location_address'] = address;
       request.fields['description'] = description;
+      request.fields['latitude'] = "-0.02"; // Dummy
+      request.fields['longitude'] = "109.33"; // Dummy
 
       var pic = await http.MultipartFile.fromPath('photo', imageFile.path);
       request.files.add(pic);
@@ -254,7 +293,6 @@ class ApiService {
     }
   }
 
-  // Ambil Riwayat Laporan (DENGAN DEBUG)
   Future<List<ReportModel>> getMyReports() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -268,26 +306,62 @@ class ApiService {
         },
       );
 
-      // --- DEBUG PRINT (Cek di Debug Console VSCode) ---
-      print("HISTORY API - Status: ${response.statusCode}");
-      print("HISTORY API - Body: ${response.body}");
-      // -------------------------------------------------
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = jsonDecode(response.body);
         final List<dynamic> data = body['data'];
         return data.map((json) => ReportModel.fromJson(json)).toList();
-      } else {
-        return [];
       }
+      return [];
     } catch (e) {
       print("Error Get My Reports: $e");
       return [];
     }
   }
 
+  Future<bool> deleteReports(List<int> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/reports/delete'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'ids': ids}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error Delete Reports: $e");
+      return false;
+    }
+  }
+
+  Future<bool> cancelReport(int reportId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/reports/$reportId/cancel'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error Cancel Report: $e");
+      return false;
+    }
+  }
+
   // ===========================================================================
-  // 5. CERTIFICATES
+  // 5. OTHERS (CERTIFICATES & DONATIONS)
   // ===========================================================================
 
   Future<List<CertificateModel>> getCertificates() async {
@@ -307,11 +381,63 @@ class ApiService {
         final Map<String, dynamic> body = jsonDecode(response.body);
         final List<dynamic> data = body['data'];
         return data.map((json) => CertificateModel.fromJson(json)).toList();
-      } else {
-        return [];
       }
+      return [];
     } catch (e) {
       print("Error Get Certificates: $e");
+      return [];
+    }
+  }
+
+  Future<String?> createDonation(int campaignId, int amount) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/donate'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: {
+          'campaign_id': campaignId.toString(),
+          'amount': amount.toString(),
+        },
+      );
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data['data']['snap_token'];
+      }
+      return null;
+    } catch (e) {
+      print("Error Create Donation: $e");
+      return null;
+    }
+  }
+
+  Future<List<DonationHistoryModel>> getDonationHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/donations/history'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+        final List<dynamic> data = body['data'];
+        return data.map((json) => DonationHistoryModel.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error Get Donation History: $e");
       return [];
     }
   }

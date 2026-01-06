@@ -14,11 +14,11 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  
+
   // State
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -76,26 +76,41 @@ class _LoginPageState extends State<LoginPage> {
                       color: Theme.of(context).primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Remix.hand_heart_fill, size: 60, color: Theme.of(context).primaryColor),
+                    child: Icon(
+                      Remix.hand_heart_fill,
+                      size: 60,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // --- JUDUL ---
-                  Text("Selamat Datang", style: Theme.of(context).textTheme.headlineMedium),
+                  Text(
+                    "Selamat Datang",
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                   const SizedBox(height: 8),
-                  Text("Masuk untuk melanjutkan aktivitas relawan.", style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    "Masuk untuk melanjutkan aktivitas relawan.",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 40),
 
                   // --- INPUT EMAIL ---
                   TextFormField(
                     controller: _emailController,
-                    keyboardType: TextInputType.emailAddress, // Tambahan: Keyboard Email
+                    keyboardType:
+                        TextInputType.emailAddress, // Tambahan: Keyboard Email
                     decoration: InputDecoration(
                       labelText: "Email",
                       prefixIcon: const Icon(Remix.mail_line),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    validator: (val) => (val == null || !val.contains("@")) ? "Email tidak valid" : null,
+                    validator: (val) => (val == null || !val.contains("@"))
+                        ? "Email tidak valid"
+                        : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -107,12 +122,21 @@ class _LoginPageState extends State<LoginPage> {
                       labelText: "Password",
                       prefixIcon: const Icon(Remix.lock_2_line),
                       suffixIcon: IconButton(
-                        icon: Icon(_isPasswordVisible ? Remix.eye_line : Remix.eye_off_line),
-                        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Remix.eye_line
+                              : Remix.eye_off_line,
+                        ),
+                        onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
+                        ),
                       ),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    validator: (val) => val!.isEmpty ? "Password wajib diisi" : null,
+                    validator: (val) =>
+                        val!.isEmpty ? "Password wajib diisi" : null,
                   ),
 
                   // --- LUPA PASSWORD (DUMMY) ---
@@ -120,8 +144,14 @@ class _LoginPageState extends State<LoginPage> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                         // Nanti bisa diarahkan ke halaman Forgot Password jika sudah ada
-                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Fitur Lupa Password belum tersedia.")));
+                        // Nanti bisa diarahkan ke halaman Forgot Password jika sudah ada
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Fitur Lupa Password belum tersedia.",
+                            ),
+                          ),
+                        );
                       },
                       child: const Text("Lupa Password?"),
                     ),
@@ -135,22 +165,61 @@ class _LoginPageState extends State<LoginPage> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // Styling tombol
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ), // Styling tombol
                       ),
-                      child: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white) 
-                        : const Text("MASUK", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "MASUK",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
+                  const SizedBox(height: 16),
+
+                  // TOMBOL TAMU
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        // Langsung ke Home tanpa simpan token
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomePage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Theme.of(context).primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Masuk sebagai Tamu",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                  ),
+
                   // --- LINK DAFTAR ---
                   GestureDetector(
                     onTap: () {
                       // Arahkan ke Halaman Register yang sudah kita update tadi
                       Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => const RegisterPage())
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
                       );
                     },
                     child: RichText(
@@ -160,8 +229,11 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           TextSpan(
                             text: "Daftar Sekarang",
-                            style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-                          )
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ),

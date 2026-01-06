@@ -23,12 +23,11 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
-  // --- LOGIKA LOGIN (UPDATE API) ---
+  // --- LOGIKA LOGIN ---
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // 1. Panggil API Login
       bool success = await ApiService().login(
         _emailController.text,
         _passwordController.text,
@@ -38,14 +37,12 @@ class _LoginPageState extends State<LoginPage> {
 
       if (success) {
         if (!mounted) return;
-        // 2. Jika Sukses -> Pindah ke Home
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } else {
         if (!mounted) return;
-        // 3. Jika Gagal -> Tampilkan Error
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Login Gagal! Cek email dan password Anda."),
@@ -54,6 +51,116 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     }
+  }
+
+  // --- FITUR LUPA PASSWORD (BOTTOM SHEET) ---
+  void _showForgotPasswordSheet() {
+    final emailResetController = TextEditingController();
+    final newPassResetController = TextEditingController();
+    
+    // Isi otomatis jika user sudah ketik email di login form
+    if (_emailController.text.isNotEmpty) {
+      emailResetController.text = _emailController.text;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Agar keyboard tidak menutupi
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            bool isResetLoading = false;
+
+            void handleReset() async {
+              if (emailResetController.text.isEmpty || newPassResetController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Isi Email & Password Baru")));
+                return;
+              }
+              if (newPassResetController.text.length < 8) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password minimal 8 karakter")));
+                return;
+              }
+
+              setSheetState(() => isResetLoading = true);
+              
+              // Panggil API Reset Dev
+              bool success = await ApiService().resetPasswordDev(
+                emailResetController.text,
+                newPassResetController.text
+              );
+
+              setSheetState(() => isResetLoading = false);
+
+              if (success) {
+                Navigator.pop(context); // Tutup Sheet
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Password berhasil direset! Silakan login."), backgroundColor: Colors.green)
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Gagal! Email tidak ditemukan."), backgroundColor: Colors.red)
+                );
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20, right: 20, top: 20
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Reset Password", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text("Masukkan email akun Anda dan password baru yang diinginkan.", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 20),
+                  
+                  TextField(
+                    controller: emailResetController,
+                    decoration: InputDecoration(
+                      labelText: "Email Terdaftar",
+                      prefixIcon: const Icon(Remix.mail_line),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: newPassResetController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: "Password Baru",
+                      prefixIcon: const Icon(Remix.lock_line),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: isResetLoading ? null : handleReset,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                      ),
+                      child: isResetLoading 
+                        ? const CircularProgressIndicator(color: Colors.white) 
+                        : const Text("RESET PASSWORD", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
   }
 
   @override
@@ -76,41 +183,26 @@ class _LoginPageState extends State<LoginPage> {
                       color: Theme.of(context).primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Remix.hand_heart_fill,
-                      size: 60,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    child: Icon(Remix.hand_heart_fill, size: 60, color: Theme.of(context).primaryColor),
                   ),
                   const SizedBox(height: 24),
 
                   // --- JUDUL ---
-                  Text(
-                    "Selamat Datang",
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
+                  Text("Selamat Datang", style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 8),
-                  Text(
-                    "Masuk untuk melanjutkan aktivitas relawan.",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  Text("Masuk untuk melanjutkan aktivitas relawan.", style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 40),
 
                   // --- INPUT EMAIL ---
                   TextFormField(
                     controller: _emailController,
-                    keyboardType:
-                        TextInputType.emailAddress, // Tambahan: Keyboard Email
+                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: "Email",
                       prefixIcon: const Icon(Remix.mail_line),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    validator: (val) => (val == null || !val.contains("@"))
-                        ? "Email tidak valid"
-                        : null,
+                    validator: (val) => (val == null || !val.contains("@")) ? "Email tidak valid" : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -122,37 +214,19 @@ class _LoginPageState extends State<LoginPage> {
                       labelText: "Password",
                       prefixIcon: const Icon(Remix.lock_2_line),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Remix.eye_line
-                              : Remix.eye_off_line,
-                        ),
-                        onPressed: () => setState(
-                          () => _isPasswordVisible = !_isPasswordVisible,
-                        ),
+                        icon: Icon(_isPasswordVisible ? Remix.eye_line : Remix.eye_off_line),
+                        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    validator: (val) =>
-                        val!.isEmpty ? "Password wajib diisi" : null,
+                    validator: (val) => val!.isEmpty ? "Password wajib diisi" : null,
                   ),
 
-                  // --- LUPA PASSWORD (DUMMY) ---
+                  // --- TOMBOL LUPA PASSWORD (AKTIF) ---
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        // Nanti bisa diarahkan ke halaman Forgot Password jika sudah ada
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Fitur Lupa Password belum tersedia.",
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _showForgotPasswordSheet, // Panggil Fungsi
                       child: const Text("Lupa Password?"),
                     ),
                   ),
@@ -164,21 +238,13 @@ class _LoginPageState extends State<LoginPage> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ), // Styling tombol
-                      ),
+                      style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "MASUK",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                          : const Text("MASUK", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
+                  
                   const SizedBox(height: 16),
 
                   // TOMBOL TAMU
@@ -187,56 +253,26 @@ class _LoginPageState extends State<LoginPage> {
                     height: 50,
                     child: OutlinedButton(
                       onPressed: () {
-                        // Langsung ke Home tanpa simpan token
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomePage(),
-                          ),
-                        );
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
                       },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Theme.of(context).primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text(
-                        "Masuk sebagai Tamu",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
+                      child: Text("Masuk sebagai Tamu", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
                     ),
                   ),
 
-                  // --- LINK DAFTAR ---
-                  GestureDetector(
-                    onTap: () {
-                      // Arahkan ke Halaman Register yang sudah kita update tadi
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
-                        ),
-                      );
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        text: "Belum punya akun? ",
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        children: [
-                          TextSpan(
-                            text: "Daftar Sekarang",
-                            style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Belum punya akun? "),
+                      GestureDetector(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage())),
+                        child: Text("Daftar Sekarang", style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -247,3 +283,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+  

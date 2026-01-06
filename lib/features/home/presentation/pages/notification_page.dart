@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:relawan_kita/core/services/api_service.dart';
-import 'package:relawan_kita/features/auth/presentation/pages/login_page.dart';
+import 'package:relawan_kita/features/home/data/models/notification_model.dart';
+// [BARU] Import Halaman Detail
 import 'package:relawan_kita/features/home/presentation/pages/notification_detail_page.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -12,80 +13,182 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-  bool _isGuest = true;
+  List<NotificationModel> _notifications = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _checkStatus();
+    _fetchNotifications();
   }
 
-  void _checkStatus() async {
-    bool login = await ApiService().isLoggedIn();
-    setState(() => _isGuest = !login);
+  Future<void> _fetchNotifications() async {
+    final data = await ApiService().getNotifications();
+    if (mounted) {
+      setState(() {
+        _notifications = data;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // [TAMPILAN TAMU]
-    if (_isGuest) {
-      return Scaffold(
-        appBar: AppBar(title: const Text("Notifikasi"), backgroundColor: Colors.white, elevation: 0, foregroundColor: Colors.black),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Remix.notification_off_line, size: 60, color: Colors.grey[300]),
-              const SizedBox(height: 16),
-              const Text("Tidak ada notifikasi", style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (c) => const LoginPage()), (r) => false),
-                child: const Text("Login untuk melihat update"),
-              )
-            ],
-          ),
-        ),
-      );
-    }
-
-    // [TAMPILAN USER]
-    final List<Map<String, dynamic>> notifications = [
-      {"title": "PERINGATAN DINI: Siaga Banjir", "body": "Debit air di Bendungan A meningkat drastis...", "time": "Baru saja", "type": "alert"},
-      {"title": "Laporan Diterima", "body": "Laporan kerusakan jalan yang Anda kirimkan telah kami terima.", "time": "10 menit lalu", "type": "info"},
-      {"title": "Donasi Berhasil Disalurkan", "body": "Terima kasih! Bantuan dana Anda telah disalurkan.", "time": "1 jam lalu", "type": "success"},
-    ];
-
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: Text("Notifikasi", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18)), backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0, leading: IconButton(icon: const Icon(Remix.arrow_left_line), onPressed: () => Navigator.pop(context))),
-      body: ListView.separated(
-        itemCount: notifications.length,
-        separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
-        itemBuilder: (context, index) {
-          final item = notifications[index];
-          final isAlert = item['type'] == 'alert';
-          return Container(
-            color: isAlert ? Colors.red.withOpacity(0.05) : Colors.white,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: isAlert ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.1), shape: BoxShape.circle), child: _getIcon(item['type'])),
-              title: Text(item['title'], style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: isAlert ? Colors.red : Colors.black87)),
-              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const SizedBox(height: 4), Text(item['body'], maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54, fontSize: 13)), const SizedBox(height: 8), Text(item['time'], style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, color: Colors.grey))]),
-              isThreeLine: true,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationDetailPage(title: item['title'], body: item['body'], time: item['time'], type: item['type']))),
+      appBar: AppBar(
+        title: const Text("Notifikasi"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Remix.arrow_left_line),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            onPressed: _fetchNotifications, // Tombol Refresh Manual
+            icon: const Icon(Remix.refresh_line),
+          )
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _notifications.isEmpty
+              ? _buildEmptyState()
+              : RefreshIndicator(
+                  onRefresh: _fetchNotifications,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    itemCount: _notifications.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      return _buildNotificationItem(_notifications[index]);
+                    },
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
             ),
-          );
-        },
+            child: Icon(Remix.notification_off_line, size: 50, color: Colors.grey[400]),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Belum ada notifikasi",
+            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _getIcon(String type) {
-    switch (type) {
-      case 'alert': return const Icon(Remix.alarm_warning_fill, color: Colors.red, size: 24);
-      case 'success': return const Icon(Remix.checkbox_circle_fill, color: Colors.green, size: 24);
-      default: return const Icon(Remix.information_fill, color: Colors.blue, size: 24);
+  Widget _buildNotificationItem(NotificationModel item) {
+    // Tentukan Icon & Warna berdasarkan Tipe
+    IconData icon;
+    Color color;
+
+    // Normalisasi string tipe agar tidak case sensitive
+    String type = item.type.toLowerCase();
+
+    if (type.contains('donation') || type.contains('success')) {
+      icon = Remix.hand_heart_fill;
+      color = Colors.pink;
+    } else if (type.contains('report') || type.contains('alert')) {
+      icon = Remix.checkbox_circle_fill;
+      color = Colors.blue;
+    } else {
+      icon = Remix.information_fill;
+      color = Colors.grey;
+    }
+
+    // [BARU] Bungkus dengan InkWell untuk Navigasi
+    return InkWell(
+      onTap: () {
+        // Navigasi ke Detail Page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NotificationDetailPage(
+              title: item.title,
+              body: item.message,
+              time: _formatDate(item.createdAt),
+              type: item.type, // Kirim tipe asli untuk logika warna di detail
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon Bulat
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            
+            // Teks
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatDate(item.createdAt), // Helper Format Tanggal
+                        style: TextStyle(color: Colors.grey[400], fontSize: 10),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.message,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String dateStr) {
+    // Format tanggal sederhana dari "2024-05-20 10:00:00" ke "20/05 10:00"
+    try {
+      DateTime date = DateTime.parse(dateStr);
+      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} ${date.hour}:${date.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return "";
     }
   }
 }

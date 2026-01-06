@@ -7,7 +7,6 @@ import 'package:relawan_kita/features/auth/presentation/pages/login_page.dart';
 
 // --- IMPORTS HALAMAN LAIN ---
 import 'package:relawan_kita/features/profile/presentation/pages/edit_profile_page.dart'; 
-import 'package:relawan_kita/features/profile/presentation/pages/certificate_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/settings_page.dart';
 import 'package:relawan_kita/features/home/presentation/pages/help_page.dart';
 
@@ -109,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Silakan login untuk melihat profil, sertifikat, dan pengaturan akun Anda.",
+                  "Silakan login untuk melihat profil dan pengaturan akun Anda.",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey),
                 ),
@@ -230,14 +229,6 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
 
-            _buildProfileMenu(
-              context,
-              icon: Remix.medal_line,
-              text: "Sertifikat Kompetensi",
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CertificatePage()));
-              },
-            ),
 
             _buildProfileMenu(
               context,

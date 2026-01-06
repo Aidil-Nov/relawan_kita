@@ -247,44 +247,50 @@ class ApiService {
   // 4. REPORTS (LAPORAN BENCANA)
   // ===========================================================================
 
+  // --- KIRIM LAPORAN (UPDATE TERIMA KOORDINAT) ---
   Future<bool> submitReport({
     required String category,
     required String urgency,
     required String address,
     required String description,
     required File imageFile,
+    // [BARU] Tambahkan Parameter Koordinat
+    required double lat,
+    required double long,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('token');
+      final token = prefs.getString('token');
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/reports'),
-      );
-
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/reports'));
+      
       request.headers.addAll({
-        'Accept': 'application/json',
         'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
       });
 
+      // Data Teks
       request.fields['category'] = category;
       request.fields['urgency'] = urgency;
       request.fields['location_address'] = address;
       request.fields['description'] = description;
-      request.fields['latitude'] = "-0.02"; // Dummy
-      request.fields['longitude'] = "109.33"; // Dummy
+      
+      // [BARU] Kirim Koordinat ke Laravel
+      request.fields['latitude'] = lat.toString();
+      request.fields['longitude'] = long.toString();
 
+      // Data File Gambar
       var pic = await http.MultipartFile.fromPath('photo', imageFile.path);
       request.files.add(pic);
 
       var response = await request.send();
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode == 201) {
         return true;
       } else {
+        // Debugging response body jika gagal
         final respStr = await response.stream.bytesToString();
-        print("Gagal Upload Laporan: $respStr");
+        print("Gagal Upload: $respStr");
         return false;
       }
     } catch (e) {

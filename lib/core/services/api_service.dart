@@ -6,12 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 // --- IMPORT MODELS ---
 import 'package:relawan_kita/features/donation/data/models/campaign_model.dart';
 import 'package:relawan_kita/features/emergency/data/models/reports_model.dart';
-import 'package:relawan_kita/features/profile/data/models/certificate_model.dart';
 import 'package:relawan_kita/features/donation/data/models/donation_history_model.dart';
+import 'package:relawan_kita/features/home/data/models/notification_model.dart';
 
 class ApiService {
   // GANTI IP SESUAI KEBUTUHAN:
-  final String baseUrl = "http://10.0.2.2:8000/api";
+  final String baseUrl = "http://172.20.10.6:8000/api";
 
   // ===========================================================================
   // 1. AUTHENTICATION (Login, Register, Logout)
@@ -361,33 +361,8 @@ class ApiService {
   }
 
   // ===========================================================================
-  // 5. OTHERS (CERTIFICATES & DONATIONS)
+  // 5. OTHERS (DONATIONS)
   // ===========================================================================
-
-  Future<List<CertificateModel>> getCertificates() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('token');
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/certificates'),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(response.body);
-        final List<dynamic> data = body['data'];
-        return data.map((json) => CertificateModel.fromJson(json)).toList();
-      }
-      return [];
-    } catch (e) {
-      print("Error Get Certificates: $e");
-      return [];
-    }
-  }
 
   Future<String?> createDonation(int campaignId, int amount) async {
     try {
@@ -439,6 +414,111 @@ class ApiService {
     } catch (e) {
       print("Error Get Donation History: $e");
       return [];
+    }
+  }
+
+  // [BARU] AMBIL DATA UNTUK PETA (PUBLIC)
+  Future<List<ReportModel>> getPublicReports() async {
+    try {
+      // Tidak perlu Header Authorization karena endpoint public
+      final response = await http.get(Uri.parse('$baseUrl/reports/public'));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+        final List<dynamic> data = body['data'];
+        return data.map((json) => ReportModel.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error Get Map Data: $e");
+      return [];
+    }
+  }
+
+  // --- RESET PASSWORD (DEV MODE) ---
+  Future<bool> resetPasswordDev(String email, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/reset-password-dev'),
+        body: {
+          'email': email,
+          'new_password': newPassword,
+          'new_password_confirmation': newPassword,
+        },
+        headers: {'Accept': 'application/json'},
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error Reset Password: $e");
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getWeather(double lat, double long) async {
+    try {
+      final url = "$baseUrl/weather?lat=$lat&lon=$long";
+      print("Requesting Weather: $url"); // DEBUG 1
+
+      final response = await http.get(Uri.parse(url));
+
+      print("Weather Status: ${response.statusCode}"); // DEBUG 2
+      print("Weather Body: ${response.body}"); // DEBUG 3
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print("Error Weather API: $e"); // LIHAT INI DI CONSOLE
+      return null;
+    }
+  }
+
+  Future<List<NotificationModel>> getNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+        final List<dynamic> data = body['data'];
+        return data.map((json) => NotificationModel.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error Get Notifications: $e");
+      return [];
+    }
+  }
+
+  // --- KIRIM SOS ---
+  Future<bool> sendSos(double lat, double long) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/reports/sos'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: {'latitude': lat.toString(), 'longitude': long.toString()},
+      );
+
+      return response.statusCode == 201;
+    } catch (e) {
+      print("Error SOS: $e");
+      return false;
     }
   }
 }
